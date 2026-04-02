@@ -126,6 +126,9 @@ return [
     'aliases' => [
         // Other aliases...
         'Helper' => App\Helpers\Helpers::class,
+        'Str' => Illuminate\Support\Str::class,
     ],
+
+    'asset_url' => env('ASSET_URL', null),
 
 ];

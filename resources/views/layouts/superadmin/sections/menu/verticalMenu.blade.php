@@ -54,6 +54,13 @@ $configData = Helper::appClasses();
     </ul>
   </li>
 
+  <li class="menu-item {{ request()->routeIs('superadmin.subscriptions.*') ? 'active' : '' }}">
+    <a href="{{ route('superadmin.subscriptions.index') }}" class="menu-link">
+        <i class="menu-icon icon-base ti tabler-receipt"></i>
+        <div>Subscriptions</div>
+    </a>
+  </li>
+
   <li class="menu-item">
     <a href="#" class="menu-link">
       <i class="menu-icon icon-base ti tabler-settings"></i>
