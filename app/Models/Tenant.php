@@ -14,9 +14,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     protected $fillable = [
         'id',
         'school_name',
+        'school_name_hi',
         'email',
         'phone',
         'address',
+        'address_hi',
         'logo',
         'per_student_rate',
         'billing_cycle',
@@ -39,9 +41,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return [
             'id',
             'school_name',
+            'school_name_hi',
             'email',
             'phone',
             'address',
+            'address_hi',
             'logo',
             'per_student_rate',
             'billing_cycle',
