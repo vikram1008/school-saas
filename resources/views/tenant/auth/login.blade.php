@@ -36,7 +36,7 @@
 
           {{-- Brand --}}
           <div class="app-brand justify-content-center mb-6">
-            <a href="javascript:void(0);" class="app-brand-link gap-2">
+            <a href="{{ route('tenant.home') }}" class="app-brand-link gap-2">
               <i class="icon-base ti tabler-building" style="font-size:2rem; color: var(--bs-primary)"></i>
               <span class="app-brand-text demo text-heading fw-bold">
                 {{ $school->school_name }}

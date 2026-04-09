@@ -1,16 +1,18 @@
 <?php
 
+use App\Http\Controllers\Tenant\AcademicYearController;
+use App\Http\Controllers\Tenant\AuthController;
+use App\Http\Controllers\Tenant\ClassController;
+use App\Http\Controllers\Tenant\DashboardController;
+use App\Http\Controllers\Tenant\SchoolHomeController;
 use App\Http\Controllers\Tenant\StaffController;
 use App\Http\Controllers\Tenant\StudentController;
+use App\Http\Middleware\CheckSubscriptionStatus;
+use App\Http\Middleware\TenantAdminOnly;
 use App\Http\Middleware\TenantAssetUrl;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-use App\Http\Middleware\CheckSubscriptionStatus;
-use App\Http\Controllers\Tenant\AuthController;
-use App\Http\Controllers\Tenant\DashboardController;
-use App\Http\Controllers\Tenant\AcademicYearController;
-use App\Http\Controllers\Tenant\ClassController;
 
 Route::middleware([
     'web',
@@ -19,6 +21,17 @@ Route::middleware([
     TenantAssetUrl::class,
     CheckSubscriptionStatus::class,
 ])->group(function () {
+    
+    /*
+    |-----------------------------------------------------------
+    | PUBLIC — School website (no auth required)
+    |-----------------------------------------------------------
+    */
+    Route::get('/', [SchoolHomeController::class, 'index'])
+        ->name('tenant.home');
+ 
+    Route::post('/contact', [SchoolHomeController::class, 'contact'])
+        ->name('tenant.home.contact');
 
     // Auth routes — no auth required
     Route::get('/login', [AuthController::class, 'showLoginForm'])
@@ -34,7 +47,7 @@ Route::middleware([
             ->name('tenant.dashboard');
 
         // Academic Years — Admin only
-        Route::middleware(\App\Http\Middleware\TenantAdminOnly::class)->group(function () {
+        Route::middleware(TenantAdminOnly::class)->group(function () {
 
             Route::get('/academic-years', [AcademicYearController::class, 'index'])
                 ->name('tenant.academic-years.index');
@@ -60,7 +73,6 @@ Route::middleware([
                 ->name('tenant.classes.sections.destroy');
             Route::post('/classes/reorder', [ClassController::class, 'reorder'])
                 ->name('tenant.classes.reorder');
-
 
             // Students
             Route::get('/students', [StudentController::class, 'index'])
