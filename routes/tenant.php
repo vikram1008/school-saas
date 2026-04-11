@@ -4,6 +4,9 @@ use App\Http\Controllers\Tenant\AcademicYearController;
 use App\Http\Controllers\Tenant\AuthController;
 use App\Http\Controllers\Tenant\ClassController;
 use App\Http\Controllers\Tenant\DashboardController;
+use App\Http\Controllers\Tenant\FeeHeadController;
+use App\Http\Controllers\Tenant\FeeStructureController;
+use App\Http\Controllers\Tenant\FeeCollectionController;
 use App\Http\Controllers\Tenant\SchoolHomeController;
 use App\Http\Controllers\Tenant\StaffController;
 use App\Http\Controllers\Tenant\StudentController;
@@ -13,6 +16,9 @@ use App\Http\Middleware\TenantAssetUrl;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use App\Http\Controllers\Tenant\StudentAttendanceController;
+use App\Http\Controllers\Tenant\StaffAttendanceController;
+use App\Http\Controllers\Tenant\AttendanceReportController;
 
 Route::middleware([
     'web',
@@ -117,6 +123,73 @@ Route::middleware([
                 ->name('tenant.staff.status');
             Route::patch('/staff/documents/{document}/verify', [StaffController::class, 'verifyDocument'])
                 ->name('tenant.staff.documents.verify');
+
+
+            // Fee Heads
+            Route::prefix('fees')->name('tenant.fees.')->group(function () {
+
+                // Fee Heads
+                Route::get('/heads', [FeeHeadController::class, 'index'])
+                    ->name('heads.index');
+                Route::post('/heads', [FeeHeadController::class, 'store'])
+                    ->name('heads.store');
+                Route::put('/heads/{feeHead}', [FeeHeadController::class, 'update'])
+                    ->name('heads.update');
+                Route::delete('/heads/{feeHead}', [FeeHeadController::class, 'destroy'])
+                    ->name('heads.destroy');
+
+                // Fee Structures
+                Route::get('/structures', [FeeStructureController::class, 'index'])
+                    ->name('structures.index');
+                Route::post('/structures', [FeeStructureController::class, 'store'])
+                    ->name('structures.store');
+                Route::delete('/structures/{feeStructure}', [FeeStructureController::class, 'destroy'])
+                    ->name('structures.destroy');
+
+                // Collections
+                Route::get('/collections', [FeeCollectionController::class, 'index'])
+                    ->name('collections.index');
+                Route::get('/collections/create', [FeeCollectionController::class, 'create'])
+                    ->name('collections.create');
+                Route::post('/collections', [FeeCollectionController::class, 'store'])
+                    ->name('collections.store');
+                Route::get('/collections/ledger', [FeeCollectionController::class, 'studentLedger'])
+                    ->name('collections.ledger');
+                Route::get('/collections/receipt/{feeCollection}', [FeeCollectionController::class, 'receipt'])
+                    ->name('receipt');
+                Route::post('/collections/generate-demands', [FeeCollectionController::class, 'generateDemands'])
+                    ->name('collections.generate-demands');
+                Route::patch('/collections/demands/{demand}/waive', [FeeCollectionController::class, 'waiveDemand'])
+                    ->name('collections.waive-demand');
+
+                // Ajax
+                Route::get('/students/search', [FeeCollectionController::class, 'searchStudents'])
+                    ->name('students.search');
+            });
+
+
+            Route::prefix('attendance')->name('tenant.attendance.')->group(function () {
+
+                // Student Attendance
+                Route::get('/students', [StudentAttendanceController::class, 'index'])
+                    ->name('students.index');
+                Route::post('/students', [StudentAttendanceController::class, 'store'])
+                    ->name('students.store');
+
+                // Staff Attendance
+                Route::get('/staff', [StaffAttendanceController::class, 'index'])
+                    ->name('staff.index');
+                Route::post('/staff', [StaffAttendanceController::class, 'store'])
+                    ->name('staff.store');
+
+                // Reports
+                Route::get('/reports/daily', [AttendanceReportController::class, 'dailySummary'])
+                    ->name('reports.daily');
+                Route::get('/reports/students/monthly', [AttendanceReportController::class, 'studentMonthly'])
+                    ->name('reports.students.monthly');
+                Route::get('/reports/staff/monthly', [AttendanceReportController::class, 'staffMonthly'])
+                    ->name('reports.staff.monthly');
+            });
 
         });
     });

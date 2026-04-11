@@ -105,6 +105,53 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
             </li>
           @endif
 
+          @if(Auth::guard('tenant')->user()?->isSchoolAdmin())
+          {{-- Fee Management --}}
+          <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Finance / वित्त</span>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.fees.collections.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.collections.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-cash"></i>
+                  <div>Fee Collection</div>
+              </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.fees.structures.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.structures.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-file-invoice"></i>
+                  <div>Fee Structure</div>
+              </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.fees.heads.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.heads.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-tags"></i>
+                  <div>Fee Heads</div>
+              </a>
+          </li>
+          @endif
+
+          <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Attendance / उपस्थिति</span>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.attendance.students.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.students.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-user-check"></i>
+                  <div>Student Attendance</div>
+              </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.attendance.staff.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.staff.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-id-badge"></i>
+                  <div>Staff Attendance</div>
+              </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.attendance.reports.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.reports.daily') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-chart-bar"></i>
+                  <div>Attendance Reports</div>
+              </a>
+          </li>
+
         </ul>
       </aside>
       {{-- / Sidebar --}}

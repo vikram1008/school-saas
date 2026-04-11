@@ -12,3 +12,8 @@ Schedule::command('subscriptions:check')
     ->dailyAt('00:00')
     ->withoutOverlapping()
     ->runInBackground();
+
+
+Schedule::command('fees:generate-demands')
+    ->monthlyOn(1, '06:00') // 1st of every month at 6am
+    ->withoutOverlapping();

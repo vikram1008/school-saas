@@ -14,6 +14,9 @@
     {{-- Bootstrap 5 (via Vuexy) --}}
     @vite(['resources/assets/vendor/scss/core.scss'])
 
+    {{-- Tabler Icons (via local Iconify CSS) --}}
+    @vite(['resources/assets/vendor/fonts/iconify/iconify.css'])
+
     {{-- Page styles --}}
     @yield('page-style')
 

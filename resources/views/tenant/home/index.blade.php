@@ -691,20 +691,17 @@ textarea.form-control { resize: none; height: 100px; }
                         <div class="carousel-inner h-100">
                             @php
                                 $slides = [
-                                    ['icon' => 'tabler-trophy', 'label' => 'Annual Day 2024 — Prize Distribution'],
-                                    ['icon' => 'tabler-microscope', 'label' => 'Science & Innovation Fair 2024'],
-                                    ['icon' => 'tabler-run', 'label' => 'Inter-School Sports Championship'],
-                                    ['icon' => 'tabler-music', 'label' => 'Cultural Fest — Tarang 2024'],
+                                    ['img' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80', 'label' => 'Annual Day 2024 — Prize Distribution'],
+                                    ['img' => 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?w=800&q=80', 'label' => 'Science & Innovation Fair 2024'],
+                                    ['img' => 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80', 'label' => 'Inter-School Sports Championship'],
+                                    ['img' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80', 'label' => 'Cultural Fest — Tarang 2024'],
                                 ];
                             @endphp
                             @foreach($slides as $i => $slide)
                             <div class="carousel-item h-100 {{ $i === 0 ? 'active' : '' }}">
-                                <div class="slide-placeholder">
-                                    <div class="slide-icon-wrap">
-                                        <i class="icon-base ti {{ $slide['icon'] }}" style="font-size:24px;color:rgba(255,255,255,.6)"></i>
-                                    </div>
-                                    <span>Photo: {{ $slide['label'] }}</span>
-                                </div>
+                                <img src="{{ $slide['img'] }}"
+                                     alt="{{ $slide['label'] }}"
+                                     style="width:100%;height:340px;object-fit:cover;display:block;">
                                 <div class="carousel-caption-custom">
                                     <p>{{ $slide['label'] }}</p>
                                 </div>
@@ -754,10 +751,9 @@ textarea.form-control { resize: none; height: 100px; }
         <div class="row align-items-center g-5">
             <div class="col-lg-5 animate-fade-up">
                 <div class="about-img-wrap" style="min-height:380px">
-                    <div class="about-img-placeholder">
-                        <i class="icon-base ti tabler-building-school"></i>
-                        <span>School campus photo</span>
-                    </div>
+                    <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80"
+                         alt="School campus"
+                         style="width:100%;height:100%;min-height:380px;object-fit:cover;display:block;border-radius:16px;">
                 </div>
             </div>
             <div class="col-lg-7 animate-fade-up">
@@ -796,7 +792,11 @@ textarea.form-control { resize: none; height: 100px; }
             <div class="col-lg-10">
                 <div class="principal-card animate-fade-up">
                     <div class="principal-avatar-wrap">
-                        <div class="principal-avatar">RP</div>
+                        <div class="principal-avatar" style="padding:0;overflow:hidden;">
+                            <img src="https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?w=200&q=80"
+                                 alt="Principal"
+                                 style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                        </div>
                         <div class="principal-name">Dr. Rajesh Pandey</div>
                         <div class="principal-designation">Principal</div>
                     </div>
@@ -932,19 +932,20 @@ textarea.form-control { resize: none; height: 100px; }
         <div class="gallery-grid animate-fade-up">
             @php
                 $galleryItems = [
-                    ['label' => 'Modern classrooms', 'icon' => 'tabler-school', 'wide' => true],
-                    ['label' => 'Sports ground',     'icon' => 'tabler-run',    'wide' => false],
-                    ['label' => 'Science lab',       'icon' => 'tabler-microscope', 'wide' => false],
-                    ['label' => 'Annual Day',         'icon' => 'tabler-trophy',    'wide' => false],
-                    ['label' => 'School library',     'icon' => 'tabler-books',     'wide' => false],
-                    ['label' => 'Computer lab',       'icon' => 'tabler-device-desktop', 'wide' => false],
-                    ['label' => 'Cultural programme', 'icon' => 'tabler-music',     'wide' => true],
+                    ['label' => 'Modern classrooms',  'img' => 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80',  'wide' => true],
+                    ['label' => 'Sports ground',      'img' => 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',  'wide' => false],
+                    ['label' => 'Science lab',        'img' => 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?w=400&q=80',  'wide' => false],
+                    ['label' => 'Annual Day',          'img' => 'https://images.unsplash.com/photo-1533561052604-c3bebb6a5e7b?w=400&q=80',  'wide' => false],
+                    ['label' => 'School library',      'img' => 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=400&q=80',  'wide' => false],
+                    ['label' => 'Computer lab',        'img' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&q=80',  'wide' => false],
+                    ['label' => 'Cultural programme',  'img' => 'https://images.unsplash.com/photo-1544531585-9847b68c8c86?w=800&q=80',  'wide' => true],
                 ];
             @endphp
             @foreach($galleryItems as $g)
-            <div class="gallery-item {{ $g['wide'] ? 'g-item-wide' : '' }}">
-                <i class="icon-base ti {{ $g['icon'] }}" style="font-size:32px;color:#8fafd6"></i>
-                <span style="font-size:12px;color:var(--text-muted)">{{ $g['label'] }}</span>
+            <div class="gallery-item {{ $g['wide'] ? 'g-item-wide' : '' }}" style="padding:0;background:none;">
+                <img src="{{ $g['img'] }}"
+                     alt="{{ $g['label'] }}"
+                     style="width:100%;height:100%;object-fit:cover;display:block;">
                 <div class="gallery-item-label">{{ $g['label'] }}</div>
             </div>
             @endforeach

@@ -1,51 +1,33 @@
 <?php
 
-namespace App\Models\Tenant;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class FeeDemand extends Model
+class StudentFeeOverride extends Model
 {
     protected $connection = 'tenant';
-    protected $table = 'fee_demands';
+    protected $table      = 'student_fee_overrides';
 
     protected $fillable = [
-        'student_id', 'academic_year_id', 'fee_head_id',
-        'demand_month', 'amount_due', 'amount_paid',
-        'due_date', 'status', 'voided_at', 'void_reason',
+        'student_profile_id',
+        'fee_head_id',
+        'academic_year_id',
+        'amount',
+        'reason',
     ];
 
     protected $casts = [
-        'amount_due'  => 'decimal:2',
-        'amount_paid' => 'decimal:2',
-        'due_date'    => 'date',
-        'demand_month'=> 'date',
-        'voided_at'   => 'datetime',
+        'amount' => 'decimal:2',
     ];
 
-    // status: unpaid | partial | paid | waived | void
-    public function student(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function student()
     {
-        return $this->belongsTo(StudentProfile::class, 'student_id');
+        return $this->belongsTo(StudentProfile::class, 'student_profile_id');
     }
 
-    public function feeHead(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function feeHead()
     {
         return $this->belongsTo(FeeHead::class, 'fee_head_id');
-    }
-
-    public function academicYear(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
-    }
-
-    public function collectionItems(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(FeeCollectionItem::class, 'fee_demand_id');
-    }
-
-    public function getBalanceAttribute(): float
-    {
-        return (float)$this->amount_due - (float)$this->amount_paid;
     }
 }
