@@ -210,9 +210,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Date of Birth</label>
-                            <input type="date" name="date_of_birth"
-                                   class="form-control"
-                                   value="{{ old('date_of_birth') }}">
+                            <input type="text"
+                                    name="date_of_birth"
+                                    id="staffDob"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Date of Birth"
+                                    value="{{ old('date_of_birth') }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Blood Group</label>
@@ -372,9 +376,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Joining Date</label>
-                            <input type="date" name="joining_date"
-                                   class="form-control"
-                                   value="{{ old('joining_date') }}">
+                            <input type="text"
+                                    name="joining_date"
+                                    id="staffJoiningDate"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Joining Date"
+                                    value="{{ old('joining_date') }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Monthly Salary (₹)</label>
@@ -501,17 +509,17 @@
                     </div>
                     <div id="subjectAssignmentSection">
                         <div class="alert alert-info small mb-3" id="nonTeachingNotice"
-                             style="display:none;">
+                            style="display:none;">
                             <i class="icon-base ti tabler-info-circle me-1"></i>
                             Subject assignments are only for teaching staff.
                         </div>
                         <div id="assignmentsContainer">
                             <div class="assignment-row border rounded p-3 mb-3">
                                 <div class="row g-3 align-items-end">
-                                    <div class="col-sm-3">
+                                    <div class="col-sm-4">
                                         <label class="form-label fw-semibold small">Class</label>
                                         <select name="assignments[0][class_id]"
-                                                class="form-select form-select-sm class-select"
+                                                class="form-select form-select-sm"
                                                 onchange="loadSectionsForAssignment(this, 0)">
                                             <option value="">Select Class</option>
                                             @foreach($classes as $class)
@@ -519,34 +527,31 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-sm-2">
+                                    <div class="col-sm-3">
                                         <label class="form-label fw-semibold small">Section</label>
                                         <select name="assignments[0][section_id]"
-                                                class="form-select form-select-sm section-select"
+                                                class="form-select form-select-sm"
                                                 id="section-select-0">
                                             <option value="">All</option>
                                         </select>
                                     </div>
-                                    <div class="col-sm-3">
-                                        <label class="form-label fw-semibold small">Subject (English)</label>
-                                        <input type="text"
-                                               name="assignments[0][subject_name]"
-                                               class="form-control form-control-sm"
-                                               placeholder="e.g. Mathematics">
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <label class="form-label fw-semibold small">
-                                            विषय <span class="badge bg-label-warning" style="font-size:9px">हिं</span>
-                                        </label>
-                                        <input type="text"
-                                               name="assignments[0][subject_name_hi]"
-                                               class="form-control form-control-sm"
-                                               placeholder="जैसे: गणित">
+                                    <div class="col-sm-4">
+                                        <label class="form-label fw-semibold small">Subject</label>
+                                        <select name="assignments[0][subject_name]"
+                                                id="subject-select-0"
+                                                class="form-select form-select-sm"
+                                                onchange="syncSubjectHi(this, 0)">
+                                            <option value="">Select Subject</option>
+                                        </select>
+                                        <input type="hidden"
+                                            name="assignments[0][subject_name_hi]"
+                                            id="subject-hi-0">
                                     </div>
                                     <div class="col-sm-1">
                                         <button type="button"
-                                                class="btn btn-sm btn-icon btn-outline-danger remove-assignment"
-                                                style="display:none;">
+                                                class="btn btn-sm btn-icon btn-outline-danger mt-4"
+                                                style="display:none;"
+                                                onclick="this.closest('.assignment-row').remove()">
                                             <i class="icon-base ti tabler-trash"></i>
                                         </button>
                                     </div>
@@ -554,7 +559,7 @@
                             </div>
                         </div>
                         <button type="button"
-                                class="btn btn-outline-primary btn-sm"
+                                class="btn btn-outline-primary btn-sm mt-2"
                                 id="addAssignmentBtn"
                                 onclick="addAssignmentRow()">
                             <i class="icon-base ti tabler-plus me-1"></i>
@@ -619,6 +624,11 @@ document.addEventListener('DOMContentLoaded', function () {
         linear: false, animation: false
     });
     stepper.to(1);
+    document.querySelectorAll('.bs-stepper').forEach(el => {
+        el.addEventListener('show.bs-stepper', function(e) {
+            setTimeout(() => initFlatpickrs(document), 150);
+        });
+    });
 
     const stepRequired = {
         'step-basic':    ['employee_code', 'staff_type'],
@@ -697,12 +707,90 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Initialize based on old value
+    // ── Subject helpers ──────────────────────────────────────────────
+
+    window.syncSubjectHi = function(select, idx) {
+        const hi = select.options[select.selectedIndex]?.dataset.hi || '';
+        const hiddenHi = document.getElementById(`subject-hi-${idx}`);
+        if (hiddenHi) hiddenHi.value = hi;
+    };
+
+    window.handleStaffType = function(type) {
+        const notice    = document.getElementById('nonTeachingNotice');
+        const container = document.getElementById('assignmentsContainer');
+        const addBtn    = document.getElementById('addAssignmentBtn');
+        if (type === 'teaching') {
+            notice.style.display    = 'none';
+            container.style.display = 'block';
+            addBtn.style.display    = 'inline-block';
+        } else {
+            notice.style.display    = 'block';
+            container.style.display = 'none';
+            addBtn.style.display    = 'none';
+        }
+    };
+
     const staffType = document.getElementById('staffTypeSelect').value;
     if (staffType) handleStaffType(staffType);
 
+    window.loadSectionsForAssignment = async function(
+        select, idx,
+        restoreSection = null,
+        restoreSubject = null
+    ) {
+        const classId       = select.value;
+        const sectionSelect = document.getElementById(`section-select-${idx}`);
+        const subjectSelect = document.getElementById(`subject-select-${idx}`);
+
+        sectionSelect.innerHTML = '<option value="">All</option>';
+        if (subjectSelect) {
+            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+        }
+        if (!classId) return;
+
+        // Sections
+        try {
+            const res      = await fetch(`/classes/${classId}/sections`);
+            const sections = await res.json();
+            sections.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (restoreSection && s.id == restoreSection) opt.selected = true;
+                sectionSelect.appendChild(opt);
+            });
+        } catch(e) { console.warn('Sections load failed', e); }
+
+        // Subjects from class_subjects
+        if (subjectSelect) {
+            try {
+                const res      = await fetch(`/classes/${classId}/subjects`);
+                const subjects = await res.json();
+                subjects.forEach(s => {
+                    const opt       = document.createElement('option');
+                    opt.value       = s.subject_name;
+                    opt.dataset.hi  = s.subject_name_hi || '';
+                    opt.textContent = s.subject_name +
+                        (s.subject_name_hi ? ' · ' + s.subject_name_hi : '');
+                    if (restoreSubject && s.subject_name === restoreSubject) {
+                        opt.selected = true;
+                        const hiddenHi = document.getElementById(`subject-hi-${idx}`);
+                        if (hiddenHi) hiddenHi.value = s.subject_name_hi || '';
+                    }
+                    subjectSelect.appendChild(opt);
+                });
+            } catch(e) { console.warn('Subjects load failed', e); }
+        }
+    };
+
     let assignmentCount = 1;
-    const classOptions = `@foreach($classes as $class)<option value="{{ $class->id }}">{{ $class->name }}</option>@endforeach`;
+
+    const classOptions = [
+        '<option value="">Select Class</option>',
+        @foreach($classes as $class)
+            `<option value="{{ $class->id }}">{{ $class->name }}</option>`,
+        @endforeach
+    ].join('');
 
     window.addAssignmentRow = function() {
         const idx = assignmentCount++;
@@ -710,16 +798,15 @@ document.addEventListener('DOMContentLoaded', function () {
         row.className = 'assignment-row border rounded p-3 mb-3';
         row.innerHTML = `
             <div class="row g-3 align-items-end">
-                <div class="col-sm-3">
+                <div class="col-sm-4">
                     <label class="form-label fw-semibold small">Class</label>
                     <select name="assignments[${idx}][class_id]"
-                            class="form-select form-select-sm class-select"
+                            class="form-select form-select-sm"
                             onchange="loadSectionsForAssignment(this, ${idx})">
-                        <option value="">Select Class</option>
                         ${classOptions}
                     </select>
                 </div>
-                <div class="col-sm-2">
+                <div class="col-sm-3">
                     <label class="form-label fw-semibold small">Section</label>
                     <select name="assignments[${idx}][section_id]"
                             class="form-select form-select-sm"
@@ -727,19 +814,21 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="">All</option>
                     </select>
                 </div>
-                <div class="col-sm-3">
-                    <label class="form-label fw-semibold small">Subject (English)</label>
-                    <input type="text" name="assignments[${idx}][subject_name]"
-                           class="form-control form-control-sm" placeholder="e.g. Mathematics">
-                </div>
-                <div class="col-sm-3">
-                    <label class="form-label fw-semibold small">विषय</label>
-                    <input type="text" name="assignments[${idx}][subject_name_hi]"
-                           class="form-control form-control-sm" placeholder="जैसे: गणित">
+                <div class="col-sm-4">
+                    <label class="form-label fw-semibold small">Subject</label>
+                    <select name="assignments[${idx}][subject_name]"
+                            id="subject-select-${idx}"
+                            class="form-select form-select-sm"
+                            onchange="syncSubjectHi(this, ${idx})">
+                        <option value="">Select Subject</option>
+                    </select>
+                    <input type="hidden"
+                           name="assignments[${idx}][subject_name_hi]"
+                           id="subject-hi-${idx}">
                 </div>
                 <div class="col-sm-1">
                     <button type="button"
-                            class="btn btn-sm btn-icon btn-outline-danger remove-assignment"
+                            class="btn btn-sm btn-icon btn-outline-danger mt-4"
                             onclick="this.closest('.assignment-row').remove()">
                         <i class="icon-base ti tabler-trash"></i>
                     </button>
@@ -748,29 +837,38 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('assignmentsContainer').appendChild(row);
     };
 
-    window.loadSectionsForAssignment = async function(select, idx) {
-        const classId = select.value;
-        const sectionSelect = document.getElementById(`section-select-${idx}`);
-        sectionSelect.innerHTML = '<option value="">All</option>';
-        if (!classId) return;
-        const res = await fetch(`/classes/${classId}/sections`);
-        const sections = await res.json();
-        sections.forEach(s => {
-            sectionSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-        });
-    };
-
     document.getElementById('panNumber')?.addEventListener('input', function() {
         this.value = this.value.toUpperCase();
     });
 
     @if($errors->any())
-        const stepMap = { 'employee_code': 0, 'staff_type': 0, 'first_name': 1, 'last_name': 1, 'gender': 1 };
+        const stepMap = {
+            'employee_code': 0, 'staff_type': 0,
+            'first_name': 1, 'last_name': 1, 'gender': 1
+        };
         const errorKeys = @json(array_keys($errors->toArray()));
         for (const key of errorKeys) {
             if (stepMap[key] !== undefined) { stepper.to(stepMap[key] + 1); break; }
         }
     @endif
+
+    flatpickr('#staffDob', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        maxDate:     'today',
+        allowInput:  false,
+        defaultDate: '{{ old('date_of_birth') }}' || null,
+        yearRange:   [1950, new Date().getFullYear()],
+    });
+
+    flatpickr('#staffJoiningDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        allowInput:  false,
+        defaultDate: '{{ old('joining_date') }}' || null,
+    });
 });
 </script>
 @endpush

@@ -60,7 +60,7 @@ class TenantUser extends Authenticatable
             'teacher'      => 'tenant.dashboard',
             'accountant'   => 'tenant.dashboard',
             'student'      => 'tenant.student.dashboard',
-            'parent'       => 'tenant.parent.dashboard',
+            'parent'       => 'tenant.parent-portal.dashboard',
             default        => 'tenant.dashboard',
         };
     }

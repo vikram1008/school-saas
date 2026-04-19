@@ -134,19 +134,6 @@
                 </div>
                 <div class="line"></div>
 
-                <div class="step" data-target="#step-subjects">
-                    <button type="button" class="step-trigger">
-                        <span class="bs-stepper-circle">
-                            <i class="icon-base ti tabler-book"></i>
-                        </span>
-                        <span class="bs-stepper-label">
-                            <span class="bs-stepper-title">Subjects / विषय</span>
-                            <span class="bs-stepper-subtitle">Stream & Subject Selection</span>
-                        </span>
-                    </button>
-                </div>
-                <div class="line"></div>
-
                 <div class="step" data-target="#step-documents">
                     <button type="button" class="step-trigger">
                         <span class="bs-stepper-circle">
@@ -198,9 +185,13 @@
                             <label class="form-label fw-semibold">
                                 Admission Date / प्रवेश दिनांक
                             </label>
-                            <input type="date" name="admission_date"
-                                   class="form-control"
-                                   value="{{ old('admission_date', date('Y-m-d')) }}">
+                            <input type="text"
+                                    name="admission_date"
+                                    id="admissionDate"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Admission Date"
+                                    value="{{ old('admission_date') }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Academic Year</label>
@@ -272,6 +263,7 @@
                             </label>
                             <input type="text" name="first_name"
                                    class="form-control @error('first_name') is-invalid @enderror"
+                                   data-hindi-target="[name='first_name_hi']"
                                    value="{{ old('first_name') }}"
                                    placeholder="First Name (English)"
                                    data-required="true">
@@ -292,6 +284,7 @@
                             </label>
                             <input type="text" name="last_name"
                                    class="form-control @error('last_name') is-invalid @enderror"
+                                   data-hindi-target="[name='last_name_hi']"
                                    value="{{ old('last_name') }}"
                                    placeholder="Last Name (English)"
                                    data-required="true">
@@ -322,9 +315,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Date of Birth / जन्म तिथि</label>
-                            <input type="date" name="date_of_birth"
-                                   class="form-control"
-                                   value="{{ old('date_of_birth') }}">
+                            <input type="text"
+                                    name="date_of_birth"
+                                    id="studentDob"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Date of Birth"
+                                    value="{{ old('date_of_birth') }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Blood Group / रक्त समूह</label>
@@ -341,6 +338,7 @@
                             <label class="form-label fw-semibold">DOB in Words (English)</label>
                             <input type="text" name="dob_in_words"
                                    class="form-control"
+                                   data-hindi-target="[name='dob_in_words_hi']"
                                    value="{{ old('dob_in_words') }}"
                                    placeholder="e.g. Fifteen March Two Thousand Ten">
                         </div>
@@ -390,6 +388,7 @@
                                 <div class="col-6">
                                     <input type="text" name="identification_mark"
                                            class="form-control"
+                                           data-hindi-target="[name='identification_mark_hi']"
                                            value="{{ old('identification_mark') }}"
                                            placeholder="English">
                                 </div>
@@ -487,6 +486,7 @@
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Father's Name</label>
                             <input type="text" name="father_name" class="form-control"
+                                   data-hindi-target="[name='father_name_hi']"
                                    value="{{ old('father_name') }}" placeholder="Full name">
                         </div>
                         <div class="col-sm-6">
@@ -499,6 +499,7 @@
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Occupation</label>
                             <input type="text" name="father_occupation" class="form-control"
+                                   data-hindi-target="[name='father_occupation_hi']"
                                    value="{{ old('father_occupation') }}" placeholder="e.g. Farmer">
                         </div>
                         <div class="col-sm-4">
@@ -533,6 +534,7 @@
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Mother's Name</label>
                             <input type="text" name="mother_name" class="form-control"
+                                   data-hindi-target="[name='mother_name_hi']"
                                    value="{{ old('mother_name') }}" placeholder="Full name">
                         </div>
                         <div class="col-sm-6">
@@ -545,6 +547,7 @@
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Occupation</label>
                             <input type="text" name="mother_occupation" class="form-control"
+                                   data-hindi-target="[name='mother_occupation_hi']"
                                    value="{{ old('mother_occupation') }}" placeholder="e.g. Homemaker">
                         </div>
                         <div class="col-sm-4">
@@ -581,6 +584,7 @@
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Guardian's Name</label>
                             <input type="text" name="guardian_name" class="form-control"
+                                   data-hindi-target="[name='guardian_name_hi']"
                                    value="{{ old('guardian_name') }}" placeholder="Full name">
                         </div>
                         <div class="col-sm-6">
@@ -593,6 +597,7 @@
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Relationship</label>
                             <input type="text" name="guardian_relationship" class="form-control"
+                                   data-hindi-target="[name='guardian_relationship_hi']"
                                    value="{{ old('guardian_relationship') }}" placeholder="e.g. Uncle">
                         </div>
                         <div class="col-sm-4">
@@ -649,6 +654,7 @@
                                     <div class="col-6">
                                         <input type="text" name="{{ $f }}"
                                                class="form-control form-control-sm"
+                                               data-hindi-target="[name='{{ $fhi }}']"
                                                value="{{ old($f) }}"
                                                placeholder="{{ $ph }}">
                                     </div>
@@ -779,8 +785,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">TC Issue Date</label>
-                            <input type="date" name="tc_issue_date" class="form-control"
-                                   value="{{ old('tc_issue_date') }}">
+                            <input type="text"
+                                    name="tc_issue_date"
+                                    id="tcIssueDate"
+                                    class="form-control flatpickr-input"
+                                    placeholder="TC Issue Date"
+                                    value="{{ old('tc_issue_date') }}"
+                                    autocomplete="off" readonly>
                         </div>
 
                         <div class="col-12 d-flex justify-content-between">
@@ -858,79 +869,6 @@
                     </div>
                 </div>
 
-                {{-- STEP 7: Subjects --}}
-                <div id="step-subjects" class="content dstepper-block">
-                    <div class="content-header mb-4">
-                        <h6 class="mb-0">Subject Selection / विषय चयन</h6>
-                        <small>Stream and subject details (for higher classes).</small>
-                    </div>
-                    <div class="row g-4">
-                        <div class="col-sm-4">
-                            <label class="form-label fw-semibold">Stream / धारा</label>
-                            <select name="stream" class="form-select">
-                                <option value="na">N/A (Primary classes)</option>
-                                <option value="arts">Arts / कला</option>
-                                <option value="science">Science / विज्ञान</option>
-                                <option value="commerce">Commerce / वाणिज्य</option>
-                                <option value="agriculture">Agriculture / कृषि</option>
-                            </select>
-                        </div>
-
-                        @foreach(range(1, 5) as $i)
-                            <div class="col-sm-6">
-                                <label class="form-label fw-semibold">
-                                    Subject {{ $i }} / विषय {{ $i }}
-                                </label>
-                                <div class="row g-1">
-                                    <div class="col-6">
-                                        <input type="text" name="subject_{{ $i }}"
-                                               class="form-control form-control-sm"
-                                               value="{{ old('subject_'.$i) }}"
-                                               placeholder="English">
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="text" name="subject_{{ $i }}_hi"
-                                               class="form-control form-control-sm"
-                                               value="{{ old('subject_'.$i.'_hi') }}"
-                                               placeholder="हिंदी में">
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">
-                                Additional Subject / अतिरिक्त विषय
-                            </label>
-                            <div class="row g-1">
-                                <div class="col-6">
-                                    <input type="text" name="additional_subject"
-                                           class="form-control form-control-sm"
-                                           value="{{ old('additional_subject') }}"
-                                           placeholder="English">
-                                </div>
-                                <div class="col-6">
-                                    <input type="text" name="additional_subject_hi"
-                                           class="form-control form-control-sm"
-                                           value="{{ old('additional_subject_hi') }}"
-                                           placeholder="हिंदी में">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12 d-flex justify-content-between">
-                            <button type="button" class="btn btn-label-secondary btn-prev">
-                                <i class="icon-base ti tabler-arrow-left icon-xs me-2"></i>Previous
-                            </button>
-                            <button type="button" class="btn btn-primary btn-next"
-                                    data-step="step-subjects">
-                                <span class="me-2">Next</span>
-                                <i class="icon-base ti tabler-arrow-right icon-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 {{-- STEP 8: Documents --}}
                 <div id="step-documents" class="content dstepper-block">
                     <div class="content-header mb-4">
@@ -981,6 +919,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const stepperEl = document.querySelector('.bs-stepper');
     const stepper   = new Stepper(stepperEl, { linear: false, animation: false });
     stepper.to(1);
+
+    document.querySelectorAll('.bs-stepper').forEach(el => {
+        el.addEventListener('show.bs-stepper', function(e) {
+            setTimeout(() => initFlatpickrs(document), 150);
+        });
+    });
 
     // Required fields per step
     const stepRequired = {
@@ -1114,6 +1058,29 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     @endif
+
+    flatpickr('#admissionDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        maxDate:     'today',
+        allowInput:  false,
+    });
+
+    flatpickr('#studentDob', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        maxDate:     'today',
+        allowInput:  false,
+    });
+
+    flatpickr('#tcIssueDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        allowInput:  false,
+    });
 
 });
 </script>

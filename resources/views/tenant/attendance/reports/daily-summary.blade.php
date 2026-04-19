@@ -28,8 +28,13 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small">Date</label>
-                        <input type="date" name="date" class="form-control"
-                               value="{{ $date }}">
+                        <input type="text"
+                                name="date"
+                                id="summaryDate"
+                                class="form-control flatpickr-input"
+                                placeholder="Select date"
+                                value="{{ $date }}"
+                                autocomplete="off" readonly>
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary">
@@ -134,4 +139,18 @@
     </div>
 
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    flatpickr('#summaryDate', {
+        dateFormat:   'Y-m-d',
+        altInput:     true,
+        altFormat:    'D, d M Y',
+        defaultDate:  '{{ $date }}',
+        allowInput:   false,
+    });
+});
+</script>
+@endpush
 @endsection

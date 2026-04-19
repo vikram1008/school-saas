@@ -39,9 +39,13 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-md-2">
                         <label class="form-label fw-semibold small">Date / दिनांक</label>
-                        <input type="date" name="date" class="form-control"
-                               value="{{ $date }}"
-                               onchange="document.getElementById('filterForm').submit()">
+                        <input type="text"
+                                name="date"
+                                id="stuAttDate"
+                                class="form-control flatpickr-input"
+                                placeholder="Select date"
+                                value="{{ $date }}"
+                                autocomplete="off" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small">Class / कक्षा</label>
@@ -284,6 +288,25 @@
     document.querySelectorAll('.status-radio:checked').forEach(radio => {
         highlightRow(parseInt(radio.dataset.student), radio.dataset.status);
     });
+</script>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    flatpickr('#stuAttDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'D, d M Y',
+        defaultDate: '{{ $date }}',
+        allowInput:  false,
+        onChange: function(selectedDates, dateStr) {
+            document.getElementById('filterForm')
+                .querySelector('[name="date"]').value = dateStr;
+            document.getElementById('filterForm').submit();
+        },
+    });
+});
 </script>
 @endpush
 

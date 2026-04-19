@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\ParentService;
 
 class StudentController extends Controller
 {
@@ -264,6 +265,14 @@ class StudentController extends Controller
                         ]);
                     }
                 }
+            }
+
+            // Auto-create parent account
+            try {
+                app(ParentService::class)->createFromStudent($student);
+            } catch (\Exception $e) {
+                // Don't fail student creation if parent creation fails
+                \Log::warning('Parent auto-creation failed: ' . $e->getMessage());
             }
 
             DB::commit();

@@ -72,11 +72,31 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
                   <div>Academic Years</div>
               </a>
           </li>
-          <li class="menu-item {{ request()->routeIs('tenant.classes.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.classes.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-layout-grid"></i>
-                  <div>Classes & Sections</div>
-              </a>
+          <li class="menu-item {{ request()->routeIs('tenant.classes.*') || request()->routeIs('tenant.subjects.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-layout-grid"></i>
+                <div>Classes & Subjects</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('tenant.classes.index') ? 'active' : '' }}">
+                    <a href="{{ route('tenant.classes.index') }}" class="menu-link">
+                        <i class="menu-icon icon-base ti tabler-door"></i>
+                        <div>Classes</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('tenant.subjects.index') ? 'active' : '' }}">
+                    <a href="{{ route('tenant.subjects.index') }}" class="menu-link">
+                        <i class="menu-icon icon-base ti tabler-book"></i>
+                        <div>Subjects</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('tenant.subjects.assign') ? 'active' : '' }}">
+                    <a href="{{ route('tenant.subjects.assign') }}" class="menu-link">
+                        <i class="menu-icon icon-base ti tabler-book-upload"></i>
+                        <div>Assign Subjects</div>
+                    </a>
+                </li>
+            </ul>
           </li>
           @endif
 
@@ -101,6 +121,38 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
               <a href="#" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-users-group"></i>
                 <div>Parents</div>
+              </a>
+            </li>
+          @endif
+
+          {{-- Parents & Notices (admin) --}}
+          @if(Auth::guard('tenant')->user()?->isSchoolAdmin())
+            <li class="menu-item {{ request()->routeIs('tenant.parents.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.parents.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-users-group"></i>
+                <div>Parents / अभिभावक</div>
+              </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('tenant.notices.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.notices.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-speakerphone"></i>
+                <div>Notices / सूचनाएं</div>
+              </a>
+            </li>
+          @endif
+
+          {{-- Parent Portal --}}
+          @if(Auth::guard('tenant')->user()?->isParent())
+            <li class="menu-item {{ request()->routeIs('tenant.parent-portal.dashboard') ? 'active' : '' }}">
+              <a href="{{ route('tenant.parent-portal.dashboard') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-home"></i>
+                <div>My Dashboard</div>
+              </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('tenant.parent-portal.notices') ? 'active' : '' }}">
+              <a href="{{ route('tenant.parent-portal.notices') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-speakerphone"></i>
+                <div>Notices</div>
               </a>
             </li>
           @endif
@@ -149,6 +201,40 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
               <a href="{{ route('tenant.attendance.reports.daily') }}" class="menu-link">
                   <i class="menu-icon icon-base ti tabler-chart-bar"></i>
                   <div>Attendance Reports</div>
+              </a>
+          </li>
+
+          <li class="menu-item {{ request()->routeIs('tenant.timetable.*') ? 'active' : '' }}">
+            <a href="{{ route('tenant.timetable.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-calendar-time"></i>
+                <div>Timetable / समय-सारणी</div>
+            </a>
+          </li>
+          <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Results / परीक्षा</span>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.results.exams.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.exams.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-clipboard-list"></i>
+                  <div>Exams / परीक्षाएं</div>
+              </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.results.marks.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.marks.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-pencil"></i>
+                  <div>Enter Marks / अंक दर्ज</div>
+              </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.results.report-cards.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.report-cards.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-certificate"></i>
+                  <div>Report Cards</div>
+              </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('tenant.results.grade-scales.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.grade-scales.index') }}" class="menu-link">
+                  <i class="menu-icon icon-base ti tabler-award"></i>
+                  <div>Grade Scale</div>
               </a>
           </li>
 
@@ -249,3 +335,9 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
     <div class="drag-target"></div>
   </div>
 @endsection
+
+@push('scripts')
+  <!-- Include Scripts -->
+  @vite(['resources/assets/js/hindi-autofill.js'])
+  @vite(['resources/assets/js/swal-confirms.js'])
+@endpush

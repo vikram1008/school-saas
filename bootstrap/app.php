@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.subscription'  => \App\Http\Middleware\CheckSubscriptionStatus::class,
             'tenant.assets'      => \App\Http\Middleware\TenantAssetUrl::class,
             'tenant.admin' => \App\Http\Middleware\TenantAdminOnly::class,
+            'parent.only' => \App\Http\Middleware\ParentOnly::class,
         ]);
 
         // Smart Unauthenticated Redirect Logic

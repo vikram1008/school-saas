@@ -140,8 +140,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Date of Birth</label>
-                            <input type="date" name="date_of_birth" class="form-control"
-                                   value="{{ old('date_of_birth', $staff->date_of_birth?->format('Y-m-d')) }}">
+                            <input type="text"
+                                    name="date_of_birth"
+                                    id="staffEditDob"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Date of Birth"
+                                    value="{{ old('date_of_birth', $staff->date_of_birth?->format('Y-m-d')) }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Blood Group</label>
@@ -277,8 +282,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Joining Date</label>
-                            <input type="date" name="joining_date" class="form-control"
-                                   value="{{ old('joining_date', $staff->joining_date?->format('Y-m-d')) }}">
+                            <input type="text"
+                                    name="joining_date"
+                                    id="staffEditJoining"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Joining Date"
+                                    value="{{ old('joining_date', $staff->joining_date?->format('Y-m-d')) }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Monthly Salary (₹)</label>
@@ -398,6 +408,7 @@
                     </div>
                     @if($staff->staff_type !== 'teaching')
                         <div class="alert alert-info small">
+                            <i class="icon-base ti tabler-info-circle me-1"></i>
                             Subject assignments are only for teaching staff.
                         </div>
                     @else
@@ -405,12 +416,12 @@
                             @forelse($staff->subjectAssignments as $i => $assignment)
                                 <div class="assignment-row border rounded p-3 mb-3">
                                     <div class="row g-3 align-items-end">
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-4">
                                             <label class="form-label fw-semibold small">Class</label>
                                             <select name="assignments[{{ $i }}][class_id]"
                                                     class="form-select form-select-sm"
                                                     onchange="loadSectionsForAssignment(this, {{ $i }})">
-                                                <option value="">Select</option>
+                                                <option value="">Select Class</option>
                                                 @foreach($classes as $class)
                                                     <option value="{{ $class->id }}"
                                                         {{ $assignment->class_id == $class->id ? 'selected' : '' }}>
@@ -419,32 +430,31 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-sm-2">
+                                        <div class="col-sm-3">
                                             <label class="form-label fw-semibold small">Section</label>
                                             <select name="assignments[{{ $i }}][section_id]"
                                                     class="form-select form-select-sm"
                                                     id="section-select-{{ $i }}">
                                                 <option value="">All</option>
-                                                {{-- Sections loaded via JS --}}
                                             </select>
                                         </div>
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-4">
                                             <label class="form-label fw-semibold small">Subject</label>
-                                            <input type="text"
-                                                   name="assignments[{{ $i }}][subject_name]"
-                                                   class="form-control form-control-sm"
-                                                   value="{{ $assignment->subject_name }}">
-                                        </div>
-                                        <div class="col-sm-3">
-                                            <label class="form-label fw-semibold small">विषय</label>
-                                            <input type="text"
-                                                   name="assignments[{{ $i }}][subject_name_hi]"
-                                                   class="form-control form-control-sm"
-                                                   value="{{ $assignment->subject_name_hi }}">
+                                            <select name="assignments[{{ $i }}][subject_name]"
+                                                    id="subject-select-{{ $i }}"
+                                                    class="form-select form-select-sm"
+                                                    data-selected="{{ $assignment->subject_name }}"
+                                                    onchange="syncSubjectHi(this, {{ $i }})">
+                                                <option value="">Select Subject</option>
+                                            </select>
+                                            <input type="hidden"
+                                                name="assignments[{{ $i }}][subject_name_hi]"
+                                                id="subject-hi-{{ $i }}"
+                                                value="{{ $assignment->subject_name_hi }}">
                                         </div>
                                         <div class="col-sm-1">
                                             <button type="button"
-                                                    class="btn btn-sm btn-icon btn-outline-danger"
+                                                    class="btn btn-sm btn-icon btn-outline-danger mt-4"
                                                     onclick="this.closest('.assignment-row').remove()">
                                                 <i class="icon-base ti tabler-trash"></i>
                                             </button>
@@ -452,21 +462,20 @@
                                     </div>
                                 </div>
                             @empty
-                                {{-- Empty row --}}
                                 <div class="assignment-row border rounded p-3 mb-3">
                                     <div class="row g-3 align-items-end">
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-4">
                                             <label class="form-label fw-semibold small">Class</label>
                                             <select name="assignments[0][class_id]"
                                                     class="form-select form-select-sm"
-                                                    onchange="loadSectionsForAssignment(this,0)">
-                                                <option value="">Select</option>
+                                                    onchange="loadSectionsForAssignment(this, 0)">
+                                                <option value="">Select Class</option>
                                                 @foreach($classes as $class)
                                                     <option value="{{ $class->id }}">{{ $class->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-sm-2">
+                                        <div class="col-sm-3">
                                             <label class="form-label fw-semibold small">Section</label>
                                             <select name="assignments[0][section_id]"
                                                     class="form-select form-select-sm"
@@ -474,24 +483,27 @@
                                                 <option value="">All</option>
                                             </select>
                                         </div>
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-4">
                                             <label class="form-label fw-semibold small">Subject</label>
-                                            <input type="text" name="assignments[0][subject_name]"
-                                                   class="form-control form-control-sm">
-                                        </div>
-                                        <div class="col-sm-3">
-                                            <label class="form-label fw-semibold small">विषय</label>
-                                            <input type="text" name="assignments[0][subject_name_hi]"
-                                                   class="form-control form-control-sm">
+                                            <select name="assignments[0][subject_name]"
+                                                    id="subject-select-0"
+                                                    class="form-select form-select-sm"
+                                                    data-selected=""
+                                                    onchange="syncSubjectHi(this, 0)">
+                                                <option value="">Select Subject</option>
+                                            </select>
+                                            <input type="hidden"
+                                                name="assignments[0][subject_name_hi]"
+                                                id="subject-hi-0">
                                         </div>
                                         <div class="col-sm-1"></div>
                                     </div>
                                 </div>
                             @endforelse
                         </div>
-                        <button type="button" class="btn btn-outline-primary btn-sm"
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2"
                                 onclick="addAssignmentRow()">
-                            <i class="icon-base ti tabler-plus me-1"></i> Add Another
+                            <i class="icon-base ti tabler-plus me-1"></i> Add Another Subject
                         </button>
                     @endif
 
@@ -565,6 +577,8 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Stepper ──────────────────────────────────────────────────────
     const stepper = new Stepper(document.querySelector('.bs-stepper'), {
         linear: false, animation: false
     });
@@ -605,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
         (stepRequired[stepId] || []).forEach(name => {
             const field = document.querySelector(`[name="${name}"]`);
             if (field) {
-                field.addEventListener('input', () => updateNextBtn(stepId));
+                field.addEventListener('input',  () => updateNextBtn(stepId));
                 field.addEventListener('change', () => updateNextBtn(stepId));
             }
         });
@@ -618,6 +632,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.addEventListener('click', () => stepper.previous());
     });
 
+    // ── Photo preview ────────────────────────────────────────────────
     window.previewPhoto = function(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -626,12 +641,128 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    // ── Address toggle ───────────────────────────────────────────────
     window.toggleCurrAddress = function(cb) {
-        document.getElementById('currAddressFields').style.display = cb.checked ? 'none' : 'block';
+        document.getElementById('currAddressFields').style.display =
+            cb.checked ? 'none' : 'block';
     };
 
-    let assignmentCount = {{ $staff->subjectAssignments->count() ?: 1 }};
-    const classOptions = `@foreach($classes as $class)<option value="{{ $class->id }}">{{ $class->name }}</option>@endforeach`;
+    // ── PAN uppercase ────────────────────────────────────────────────
+    document.getElementById('panNumber')?.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+
+    // ── Flatpickr ────────────────────────────────────────────────────
+    flatpickr('#staffEditDob', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        maxDate:     'today',
+        allowInput:  false,
+        defaultDate: '{{ old('date_of_birth', $staff->date_of_birth?->format('Y-m-d')) }}' || null,
+    });
+
+    flatpickr('#staffEditJoining', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        allowInput:  false,
+        defaultDate: '{{ old('joining_date', $staff->joining_date?->format('Y-m-d')) }}' || null,
+    });
+
+    // ── Subject assignment helpers ────────────────────────────────────
+
+    // Sync hidden hindi field when subject changes
+    window.syncSubjectHi = function(select, idx) {
+        const hi = select.options[select.selectedIndex]?.dataset.hi || '';
+        const hiddenHi = document.getElementById(`subject-hi-${idx}`);
+        if (hiddenHi) hiddenHi.value = hi;
+    };
+
+    // Load sections + subjects for a class, then restore selections
+    window.loadSectionsForAssignment = async function(
+        select, idx,
+        restoreSection = null,
+        restoreSubject = null
+    ) {
+        const classId       = select.value;
+        const sectionSelect = document.getElementById(`section-select-${idx}`);
+        const subjectSelect = document.getElementById(`subject-select-${idx}`);
+
+        sectionSelect.innerHTML = '<option value="">All</option>';
+        if (subjectSelect) {
+            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+        }
+        if (!classId) return;
+
+        // Load sections
+        try {
+            const secRes   = await fetch(`/classes/${classId}/sections`);
+            const sections = await secRes.json();
+            sections.forEach(s => {
+                const opt      = document.createElement('option');
+                opt.value      = s.id;
+                opt.textContent = s.name;
+                if (restoreSection && s.id == restoreSection) opt.selected = true;
+                sectionSelect.appendChild(opt);
+            });
+        } catch(e) {
+            console.warn('Section load failed', e);
+        }
+
+        // Load subjects from class_subjects
+        if (subjectSelect) {
+            try {
+                const subRes  = await fetch(`/classes/${classId}/subjects`);
+                const subjects = await subRes.json();
+                subjects.forEach(s => {
+                    const opt       = document.createElement('option');
+                    opt.value       = s.subject_name;
+                    opt.dataset.hi  = s.subject_name_hi || '';
+                    opt.textContent = s.subject_name +
+                        (s.subject_name_hi ? ' · ' + s.subject_name_hi : '');
+                    if (restoreSubject && s.subject_name === restoreSubject) {
+                        opt.selected = true;
+                        // Also update hidden hi field
+                        const hiddenHi = document.getElementById(`subject-hi-${idx}`);
+                        if (hiddenHi) hiddenHi.value = s.subject_name_hi || '';
+                    }
+                    subjectSelect.appendChild(opt);
+                });
+            } catch(e) {
+                console.warn('Subject load failed', e);
+            }
+        }
+    };
+
+    // ── Restore existing assignments on page load ─────────────────────
+    @foreach($staff->subjectAssignments as $i => $assignment)
+        @if($assignment->class_id)
+        (async () => {
+            const select = document.querySelector(
+                `[name="assignments[{{ $i }}][class_id]"]`
+            );
+            if (select) {
+                await loadSectionsForAssignment(
+                    select,
+                    {{ $i }},
+                    '{{ $assignment->section_id ?? '' }}',
+                    '{{ addslashes($assignment->subject_name) }}'
+                );
+            }
+        })();
+        @endif
+    @endforeach
+
+    // ── Dynamic add row ──────────────────────────────────────────────
+    let assignmentCount = {{ max($staff->subjectAssignments->count(), 1) }};
+
+    const classOptions = [
+        '<option value="">Select Class</option>',
+        @foreach($classes as $class)
+            `<option value="{{ $class->id }}">{{ $class->name }}</option>`,
+        @endforeach
+    ].join('');
 
     window.addAssignmentRow = function() {
         const idx = assignmentCount++;
@@ -639,29 +770,37 @@ document.addEventListener('DOMContentLoaded', function () {
         row.className = 'assignment-row border rounded p-3 mb-3';
         row.innerHTML = `
             <div class="row g-3 align-items-end">
-                <div class="col-sm-3">
+                <div class="col-sm-4">
                     <label class="form-label fw-semibold small">Class</label>
-                    <select name="assignments[${idx}][class_id]" class="form-select form-select-sm"
-                            onchange="loadSectionsForAssignment(this,${idx})">
-                        <option value="">Select</option>${classOptions}
+                    <select name="assignments[${idx}][class_id]"
+                            class="form-select form-select-sm"
+                            onchange="loadSectionsForAssignment(this, ${idx})">
+                        ${classOptions}
                     </select>
                 </div>
-                <div class="col-sm-2">
+                <div class="col-sm-3">
                     <label class="form-label fw-semibold small">Section</label>
-                    <select name="assignments[${idx}][section_id]" class="form-select form-select-sm" id="section-select-${idx}">
+                    <select name="assignments[${idx}][section_id]"
+                            class="form-select form-select-sm"
+                            id="section-select-${idx}">
                         <option value="">All</option>
                     </select>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-sm-4">
                     <label class="form-label fw-semibold small">Subject</label>
-                    <input type="text" name="assignments[${idx}][subject_name]" class="form-control form-control-sm">
-                </div>
-                <div class="col-sm-3">
-                    <label class="form-label fw-semibold small">विषय</label>
-                    <input type="text" name="assignments[${idx}][subject_name_hi]" class="form-control form-control-sm">
+                    <select name="assignments[${idx}][subject_name]"
+                            id="subject-select-${idx}"
+                            class="form-select form-select-sm"
+                            onchange="syncSubjectHi(this, ${idx})">
+                        <option value="">Select Subject</option>
+                    </select>
+                    <input type="hidden"
+                           name="assignments[${idx}][subject_name_hi]"
+                           id="subject-hi-${idx}">
                 </div>
                 <div class="col-sm-1">
-                    <button type="button" class="btn btn-sm btn-icon btn-outline-danger"
+                    <button type="button"
+                            class="btn btn-sm btn-icon btn-outline-danger mt-4"
                             onclick="this.closest('.assignment-row').remove()">
                         <i class="icon-base ti tabler-trash"></i>
                     </button>
@@ -670,36 +809,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('assignmentsContainer').appendChild(row);
     };
 
-    window.loadSectionsForAssignment = async function(select, idx) {
-        const classId = select.value;
-        const sectionSelect = document.getElementById(`section-select-${idx}`);
-        if (!sectionSelect) return;
-        sectionSelect.innerHTML = '<option value="">All</option>';
-        if (!classId) return;
-        const res = await fetch(`/classes/${classId}/sections`);
-        const sections = await res.json();
-        sections.forEach(s => {
-            sectionSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-        });
-    };
-
-    // Load existing assignment sections
-    @foreach($staff->subjectAssignments as $i => $assignment)
-        @if($assignment->class_id)
-            (async () => {
-                const select = document.querySelector(`[name="assignments[{{ $i }}][class_id]"]`);
-                if (select) {
-                    await loadSectionsForAssignment(select, {{ $i }});
-                    const sectionSelect = document.getElementById('section-select-{{ $i }}');
-                    if (sectionSelect) sectionSelect.value = '{{ $assignment->section_id ?? "" }}';
-                }
-            })();
-        @endif
-    @endforeach
-
-    document.getElementById('panNumber')?.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
-    });
 });
 </script>
 @endpush

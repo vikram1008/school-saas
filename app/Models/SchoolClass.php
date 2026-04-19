@@ -61,4 +61,10 @@ class SchoolClass extends Model
     {
         return (static::where('academic_year_id', $academicYearId)->max('order') ?? 0) + 1;
     }
+
+    public function subjects()
+    {
+        return $this->hasMany(ClassSubject::class, 'class_id')
+            ->orderBy('sort_order');
+    }
 }

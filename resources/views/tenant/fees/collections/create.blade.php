@@ -232,9 +232,13 @@
                                     <label class="form-label fw-semibold">
                                         Collection Date <span class="text-danger">*</span>
                                     </label>
-                                    <input type="date" name="collection_date"
-                                           class="form-control"
-                                           value="{{ date('Y-m-d') }}" required>
+                                    <input type="text"
+                                            name="collection_date"
+                                            id="collectionDate"
+                                            class="form-control flatpickr-input"
+                                            placeholder="Select date"
+                                            value="{{ date('Y-m-d') }}"
+                                            autocomplete="off" readonly>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">
@@ -341,7 +345,20 @@ document.addEventListener('click', function(e) {
         searchDropdown.style.display = 'none';
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    flatpickr('#collectionDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        defaultDate: 'today',
+        maxDate:     'today',
+        allowInput:  false,
+    });
+});
 </script>
 @endpush
+
+
 
 @endsection

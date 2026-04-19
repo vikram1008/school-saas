@@ -191,10 +191,13 @@
                             <label class="form-label fw-semibold">
                                 Start Date <span class="text-danger">*</span>
                             </label>
-                            <input type="date"
-                                   name="start_date"
-                                   class="form-control @error('start_date') is-invalid @enderror"
-                                   value="{{ old('start_date') }}">
+                            <input type="text"
+                                name="start_date"
+                                id="ay_start_date"
+                                class="form-control flatpickr-input @error('start_date') is-invalid @enderror"
+                                placeholder="Select start date"
+                                value="{{ old('start_date') }}"
+                                autocomplete="off" readonly>
                             @error('start_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -203,10 +206,13 @@
                             <label class="form-label fw-semibold">
                                 End Date <span class="text-danger">*</span>
                             </label>
-                            <input type="date"
-                                   name="end_date"
-                                   class="form-control @error('end_date') is-invalid @enderror"
-                                   value="{{ old('end_date') }}">
+                            <input type="text"
+                                name="end_date"
+                                id="ay_end_date"
+                                class="form-control flatpickr-input @error('end_date') is-invalid @enderror"
+                                placeholder="Select end date"
+                                value="{{ old('end_date') }}"
+                                autocomplete="off" readonly>
                             @error('end_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -245,5 +251,28 @@
 </script>
 @endpush
 @endif
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        flatpickr('#ay_start_date', {
+            dateFormat:  'Y-m-dd',
+            altInput:    true,
+            altFormat:   'd M Y',
+            allowInput:  false,
+            appendTo: document.querySelector('#addYearModal'),
+            static: true,
+        });
+        flatpickr('#ay_end_date', {
+            dateFormat:  'Y-m-d',
+            altInput:    true,
+            altFormat:   'd M Y',
+            allowInput:  false,
+            appendTo: document.querySelector('#addYearModal'),
+            static: true,
+        });
+    });
+</script>
+@endpush
 
 @endsection

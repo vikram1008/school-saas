@@ -18,6 +18,7 @@ class ClassController extends Controller
         $classes = $activeYear
             ? SchoolClass::with(['sections.classTeacher', 'classTeacher'])
                 ->where('academic_year_id', $activeYear->id)
+                ->withCount('students as student_count')
                 ->orderBy('order')
                 ->get()
             : collect();

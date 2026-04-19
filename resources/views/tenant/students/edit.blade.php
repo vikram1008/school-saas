@@ -144,19 +144,6 @@
                 </div>
                 <div class="line"></div>
 
-                <div class="step" data-target="#step-subjects">
-                    <button type="button" class="step-trigger">
-                        <span class="bs-stepper-circle">
-                            <i class="icon-base ti tabler-book"></i>
-                        </span>
-                        <span class="bs-stepper-label">
-                            <span class="bs-stepper-title">Subjects / विषय</span>
-                            <span class="bs-stepper-subtitle">Stream & Subject Selection</span>
-                        </span>
-                    </button>
-                </div>
-                <div class="line"></div>
-
                 <div class="step" data-target="#step-documents">
                     <button type="button" class="step-trigger">
                         <span class="bs-stepper-circle">
@@ -203,9 +190,13 @@
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Admission Date / प्रवेश दिनांक</label>
-                            <input type="date" name="admission_date"
-                                   class="form-control"
-                                   value="{{ old('admission_date', $student->admission_date?->format('Y-m-d')) }}">
+                            <input type="text"
+                                    name="admission_date"
+                                    id="editAdmissionDate"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Admission Date"
+                                    value="{{ old('admission_date', $student->admission_date?->format('Y-m-d')) }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Academic Year</label>
@@ -340,9 +331,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Date of Birth / जन्म तिथि</label>
-                            <input type="date" name="date_of_birth"
-                                   class="form-control"
-                                   value="{{ old('date_of_birth', $student->date_of_birth?->format('Y-m-d')) }}">
+                            <input type="text"
+                                    name="date_of_birth"
+                                    id="editStudentDob"
+                                    class="form-control flatpickr-input"
+                                    placeholder="Date of Birth"
+                                    value="{{ old('date_of_birth', $student->date_of_birth?->format('Y-m-d')) }}"
+                                    autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Blood Group</label>
@@ -796,8 +791,13 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">TC Issue Date</label>
-                            <input type="date" name="tc_issue_date" class="form-control"
-                                   value="{{ old('tc_issue_date', $hist?->tc_issue_date?->format('Y-m-d')) }}">
+                            <input type="text"
+                                    name="tc_issue_date"
+                                    id="editTcIssueDate"
+                                    class="form-control flatpickr-input"
+                                    placeholder="TC Issue Date"
+                                    value="{{ old('tc_issue_date', $student->academicHistory?->tc_issue_date?->format('Y-m-d')) }}"
+                                    autocomplete="off" readonly>
                         </div>
 
                         <div class="col-12 d-flex justify-content-between">
@@ -869,77 +869,7 @@
                     </div>
                 </div>
 
-                {{-- STEP 7: Subjects --}}
-                <div id="step-subjects" class="content dstepper-block">
-                    <div class="content-header mb-4">
-                        <h6 class="mb-0">Subject Selection / विषय चयन</h6>
-                    </div>
-                    @php $subj = $student->subjects; @endphp
-                    <div class="row g-4">
-                        <div class="col-sm-4">
-                            <label class="form-label fw-semibold">Stream / धारा</label>
-                            <select name="stream" class="form-select">
-                                @foreach(['na'=>'N/A','arts'=>'Arts / कला','science'=>'Science / विज्ञान','commerce'=>'Commerce / वाणिज्य','agriculture'=>'Agriculture / कृषि'] as $val=>$lbl)
-                                    <option value="{{ $val }}"
-                                        {{ old('stream', $subj?->stream) == $val ? 'selected' : '' }}>
-                                        {{ $lbl }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        @foreach(range(1, 5) as $i)
-                            <div class="col-sm-6">
-                                <label class="form-label fw-semibold">Subject {{ $i }} / विषय {{ $i }}</label>
-                                <div class="row g-1">
-                                    <div class="col-6">
-                                        <input type="text" name="subject_{{ $i }}"
-                                               class="form-control form-control-sm"
-                                               value="{{ old('subject_'.$i, $subj?->{"subject_{$i}"}) }}"
-                                               placeholder="English">
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="text" name="subject_{{ $i }}_hi"
-                                               class="form-control form-control-sm"
-                                               value="{{ old('subject_'.$i.'_hi', $subj?->{"subject_{$i}_hi"}) }}"
-                                               placeholder="हिंदी में">
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Additional Subject</label>
-                            <div class="row g-1">
-                                <div class="col-6">
-                                    <input type="text" name="additional_subject"
-                                           class="form-control form-control-sm"
-                                           value="{{ old('additional_subject', $subj?->additional_subject) }}"
-                                           placeholder="English">
-                                </div>
-                                <div class="col-6">
-                                    <input type="text" name="additional_subject_hi"
-                                           class="form-control form-control-sm"
-                                           value="{{ old('additional_subject_hi', $subj?->additional_subject_hi) }}"
-                                           placeholder="हिंदी में">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12 d-flex justify-content-between">
-                            <button type="button" class="btn btn-label-secondary btn-prev">
-                                <i class="icon-base ti tabler-arrow-left icon-xs me-2"></i>Previous
-                            </button>
-                            <button type="button" class="btn btn-primary btn-next"
-                                    data-step="step-subjects">
-                                <span class="me-2">Next</span>
-                                <i class="icon-base ti tabler-arrow-right icon-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- STEP 8: Documents --}}
+                {{-- STEP 7: Documents --}}
                 <div id="step-documents" class="content dstepper-block">
                     <div class="content-header mb-4">
                         <h6 class="mb-0">Documents / दस्तावेज़</h6>
@@ -1014,6 +944,12 @@ document.addEventListener('DOMContentLoaded', function () {
         animation: false
     });
     stepper.to(1);
+
+    document.querySelectorAll('.bs-stepper').forEach(el => {
+        el.addEventListener('show.bs-stepper', function(e) {
+            setTimeout(() => initFlatpickrs(document), 150);
+        });
+    });
 
     // Required fields per step
     const stepRequired = {
@@ -1118,6 +1054,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     @endif
+
+    flatpickr('#editAdmissionDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        maxDate:     'today',
+        allowInput:  false,
+        defaultDate: '{{ old('admission_date', $student->admission_date?->format('Y-m-d')) }}' || null,
+    });
+
+    flatpickr('#editStudentDob', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        maxDate:     'today',
+        allowInput:  false,
+        defaultDate: '{{ old('date_of_birth', $student->date_of_birth?->format('Y-m-d')) }}' || null,
+    });
+
+    flatpickr('#editTcIssueDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'd M Y',
+        allowInput:  false,
+        defaultDate: '{{ old('tc_issue_date', $student->academicHistory?->tc_issue_date?->format('Y-m-d')) }}' || null,
+    });
 
 });
 </script>

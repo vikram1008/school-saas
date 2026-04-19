@@ -39,9 +39,13 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small">Date</label>
-                        <input type="date" name="date" class="form-control"
-                               value="{{ $date }}"
-                               onchange="document.getElementById('staffFilterForm').submit()">
+                        <input type="text"
+                            name="date"
+                            id="staffAttDate"
+                            class="form-control flatpickr-input"
+                            placeholder="Select date"
+                            value="{{ $date }}"
+                            autocomplete="off" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small">Staff Type</label>
@@ -155,18 +159,22 @@
                                         </td>
                                     @endforeach
                                     <td>
-                                        <input type="time"
-                                               name="attendance[{{ $member->id }}][in_time]"
-                                               class="form-control form-control-sm"
-                                               value="{{ $existing?->in_time }}"
-                                               style="width:100px">
+                                        <input type="text"
+                                                name="attendance[{{ $member->id }}][in_time]"
+                                                class="form-control form-control-sm flatpickr-time"
+                                                value="{{ $existing?->in_time }}"
+                                                placeholder="In time"
+                                                autocomplete="off" readonly
+                                                style="width:110px">
                                     </td>
                                     <td>
-                                        <input type="time"
-                                               name="attendance[{{ $member->id }}][out_time]"
-                                               class="form-control form-control-sm"
-                                               value="{{ $existing?->out_time }}"
-                                               style="width:100px">
+                                        <input type="text"
+                                                name="attendance[{{ $member->id }}][out_time]"
+                                                class="form-control form-control-sm flatpickr-time"
+                                                value="{{ $existing?->out_time }}"
+                                                placeholder="Out time"
+                                                autocomplete="off" readonly
+                                                style="width:110px">
                                     </td>
                                     <td>
                                         <input type="text"
@@ -233,6 +241,41 @@
     document.querySelectorAll('.staff-radio:checked').forEach(radio => {
         highlightStaffRow(parseInt(radio.dataset.staff), radio.dataset.status);
     });
+</script>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Date filter — auto submit
+    flatpickr('#staffAttDate', {
+        dateFormat:  'Y-m-d',
+        altInput:    true,
+        altFormat:   'D, d M Y',
+        defaultDate: '{{ $date }}',
+        allowInput:  false,
+        onChange: function(selectedDates, dateStr) {
+            document.getElementById('staffFilterForm')
+                .querySelector('[name="date"]').value = dateStr;
+            document.getElementById('staffFilterForm').submit();
+        },
+    });
+
+    // Time pickers — init all in/out time fields
+    document.querySelectorAll('.flatpickr-time').forEach(function(el) {
+        flatpickr(el, {
+            enableTime:      true,
+            noCalendar:      true,
+            dateFormat:      'H:i',
+            altInput:        true,
+            altFormat:       'h:i K',
+            allowInput:      false,
+            time_24hr:       false,
+            minuteIncrement: 5,
+            defaultDate:     el.value || null,
+        });
+    });
+});
 </script>
 @endpush
 

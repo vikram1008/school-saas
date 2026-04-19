@@ -41,3 +41,8 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
 });
 
 // Illuminate\Support\Facades\DB
+
+/*
+$t = App\Models\Tenant::latest()->first();
+tenancy()->initialize($t);
+*/
