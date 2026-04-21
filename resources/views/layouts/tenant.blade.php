@@ -26,7 +26,7 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
 
-      {{-- Sidebar --}}
+      {{-- ===================== SIDEBAR ===================== --}}
       <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
         <div class="app-brand demo">
           <a href="{{ route('tenant.dashboard') }}" class="app-brand-link">
@@ -39,18 +39,16 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
 
         <div class="menu-inner-shadow"></div>
 
-        {{-- Subscription Banner (Sidebar) --}}
+        {{-- Subscription Warning Banner --}}
         @if(isset($subscriptionBanner))
           @php $banner = $subscriptionBanner; @endphp
           <div class="mx-3 mt-3">
             <div class="alert {{ $banner['status'] === 'grace_readonly' ? 'alert-danger' : 'alert-warning' }} p-2 small mb-0">
               <i class="icon-base ti {{ $banner['status'] === 'grace_readonly' ? 'tabler-lock' : 'tabler-alert-triangle' }} me-1"></i>
               @if($banner['status'] === 'grace_readonly')
-                <strong>Read-Only Mode</strong><br>
-                {{ $banner['days_overdue'] }} days overdue.
+                <strong>Read-Only Mode</strong><br>{{ $banner['days_overdue'] }} days overdue.
               @else
-                <strong>Payment Overdue</strong><br>
-                {{ $banner['days_overdue'] }} days overdue.
+                <strong>Payment Overdue</strong><br>{{ $banner['days_overdue'] }} days overdue.
               @endif
             </div>
           </div>
@@ -58,203 +56,230 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
 
         <ul class="menu-inner py-1">
 
-          {{-- Dashboard --}}
+          {{-- ── DASHBOARD (always visible) ── --}}
           <li class="menu-item {{ request()->routeIs('tenant.dashboard') ? 'active' : '' }}">
             <a href="{{ route('tenant.dashboard') }}" class="menu-link">
               <i class="menu-icon icon-base ti tabler-layout-dashboard"></i>
               <div>Dashboard</div>
             </a>
           </li>
-          @if(Auth::guard('tenant')->user()?->isSchoolAdmin())
-          <li class="menu-header small text-uppercase">
-              <span class="menu-header-text">Academic</span>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.academic-years.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.academic-years.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-calendar"></i>
-                  <div>Academic Years</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.classes.*') || request()->routeIs('tenant.subjects.*') ? 'active open' : '' }}">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base ti tabler-layout-grid"></i>
-                <div>Classes & Subjects</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item {{ request()->routeIs('tenant.classes.index') ? 'active' : '' }}">
-                    <a href="{{ route('tenant.classes.index') }}" class="menu-link">
-                        <i class="menu-icon icon-base ti tabler-door"></i>
-                        <div>Classes</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ request()->routeIs('tenant.subjects.index') ? 'active' : '' }}">
-                    <a href="{{ route('tenant.subjects.index') }}" class="menu-link">
-                        <i class="menu-icon icon-base ti tabler-book"></i>
-                        <div>Subjects</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ request()->routeIs('tenant.subjects.assign') ? 'active' : '' }}">
-                    <a href="{{ route('tenant.subjects.assign') }}" class="menu-link">
-                        <i class="menu-icon icon-base ti tabler-book-upload"></i>
-                        <div>Assign Subjects</div>
-                    </a>
-                </li>
-            </ul>
-          </li>
-          @endif
 
+          {{-- ════════════════════════════════ --}}
+          {{--   SCHOOL ADMIN MENU             --}}
+          {{-- ════════════════════════════════ --}}
           @if(Auth::guard('tenant')->user()?->isSchoolAdmin())
-            {{-- School Management --}}
+
+            {{-- ── 1. DAILY OPERATIONS (highest priority) ── --}}
             <li class="menu-header small text-uppercase">
-              <span class="menu-header-text">School Management</span>
+              <span class="menu-header-text">Daily Operations</span>
             </li>
-            <li class="menu-item {{ request()->routeIs('tenant.students.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.students.index') }}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-users"></i>
-                <div>Students / छात्र</div>
-              </a>
-            </li>
-            <li class="menu-item {{ request()->routeIs('tenant.staff.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.staff.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-chalkboard"></i>
-                  <div>Staff / स्टाफ</div>
-              </a>
-          </li>
-            <li class="menu-item">
-              <a href="#" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-users-group"></i>
-                <div>Parents</div>
-              </a>
-            </li>
-          @endif
 
-          {{-- Parents & Notices (admin) --}}
-          @if(Auth::guard('tenant')->user()?->isSchoolAdmin())
-            <li class="menu-item {{ request()->routeIs('tenant.parents.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.parents.index') }}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-users-group"></i>
-                <div>Parents / अभिभावक</div>
+            {{-- Fee Collection --}}
+            <li class="menu-item {{ request()->routeIs('tenant.fees.collections.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.collections.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-cash"></i>
+                <div>Fee Collection / शुल्क संग्रह</div>
               </a>
             </li>
+
+            {{-- Student Attendance --}}
+            <li class="menu-item {{ request()->routeIs('tenant.attendance.students.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.students.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-user-check"></i>
+                <div>Student Attendance / उपस्थिति</div>
+              </a>
+            </li>
+
+            {{-- Staff Attendance --}}
+            <li class="menu-item {{ request()->routeIs('tenant.attendance.staff.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.staff.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-id-badge"></i>
+                <div>Staff Attendance</div>
+              </a>
+            </li>
+
+            {{-- Enter Marks --}}
+            <li class="menu-item {{ request()->routeIs('tenant.results.marks.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.marks.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-pencil"></i>
+                <div>Enter Marks / अंक दर्ज</div>
+              </a>
+            </li>
+
+            {{-- Notices --}}
             <li class="menu-item {{ request()->routeIs('tenant.notices.*') ? 'active' : '' }}">
               <a href="{{ route('tenant.notices.index') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-speakerphone"></i>
                 <div>Notices / सूचनाएं</div>
               </a>
             </li>
-          @endif
 
-          {{-- Parent Portal --}}
+            {{-- ── 2. PEOPLE MANAGEMENT ── --}}
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">People / लोग</span>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.students.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.students.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-users"></i>
+                <div>Students / छात्र</div>
+              </a>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.staff.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.staff.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-chalkboard"></i>
+                <div>Staff / स्टाफ</div>
+              </a>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.parents.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.parents.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-users-group"></i>
+                <div>Parents / अभिभावक</div>
+              </a>
+            </li>
+
+            {{-- ── 3. TIMETABLE ── --}}
+            <li class="menu-item {{ request()->routeIs('tenant.timetable.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.timetable.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-calendar-time"></i>
+                <div>Timetable / समय-सारणी</div>
+              </a>
+            </li>
+
+            {{-- ── 4. ATTENDANCE REPORTS ── --}}
+            <li class="menu-item {{ request()->routeIs('tenant.attendance.reports.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.reports.daily') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-chart-bar"></i>
+                <div>Attendance Reports</div>
+              </a>
+            </li>
+
+            {{-- ── 5. RESULTS / EXAMS ── --}}
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Results / परीक्षा</span>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.results.exams.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.exams.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-clipboard-list"></i>
+                <div>Exams / परीक्षाएं</div>
+              </a>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.results.report-cards.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.report-cards.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-certificate"></i>
+                <div>Report Cards</div>
+              </a>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.results.grade-scales.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.grade-scales.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-award"></i>
+                <div>Grade Scale</div>
+              </a>
+            </li>
+
+            {{-- ── 6. FINANCE (setup / reports) ── --}}
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Finance / वित्त</span>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.fees.structures.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.structures.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-file-invoice"></i>
+                <div>Fee Structure</div>
+              </a>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.fees.heads.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.heads.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-tags"></i>
+                <div>Fee Heads</div>
+              </a>
+            </li>
+
+            {{-- ── 7. ACADEMIC SETUP ── --}}
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Academic Setup</span>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.academic-years.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.academic-years.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-calendar"></i>
+                <div>Academic Years</div>
+              </a>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.classes.*') || request()->routeIs('tenant.subjects.*') ? 'active open' : '' }}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-layout-grid"></i>
+                <div>Classes & Subjects</div>
+              </a>
+              <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('tenant.classes.index') ? 'active' : '' }}">
+                  <a href="{{ route('tenant.classes.index') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-door"></i>
+                    <div>Classes</div>
+                  </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('tenant.subjects.index') ? 'active' : '' }}">
+                  <a href="{{ route('tenant.subjects.index') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-book"></i>
+                    <div>Subjects</div>
+                  </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('tenant.subjects.assign') ? 'active' : '' }}">
+                  <a href="{{ route('tenant.subjects.assign') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-book-upload"></i>
+                    <div>Assign Subjects</div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            {{-- ── 8. SETTINGS (rarely visited, always last) ── --}}
+            <li class="menu-item {{ request()->routeIs('tenant.settings.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.settings.school.edit') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-settings"></i>
+                <div>School Settings</div>
+              </a>
+            </li>
+
+          @endif
+          {{-- /isSchoolAdmin --}}
+
+          {{-- ════════════════════════════════ --}}
+          {{--   PARENT PORTAL MENU            --}}
+          {{-- ════════════════════════════════ --}}
           @if(Auth::guard('tenant')->user()?->isParent())
+
             <li class="menu-item {{ request()->routeIs('tenant.parent-portal.dashboard') ? 'active' : '' }}">
               <a href="{{ route('tenant.parent-portal.dashboard') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-home"></i>
                 <div>My Dashboard</div>
               </a>
             </li>
+
             <li class="menu-item {{ request()->routeIs('tenant.parent-portal.notices') ? 'active' : '' }}">
               <a href="{{ route('tenant.parent-portal.notices') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-speakerphone"></i>
                 <div>Notices</div>
               </a>
             </li>
+
           @endif
-
-          @if(Auth::guard('tenant')->user()?->isSchoolAdmin())
-          {{-- Fee Management --}}
-          <li class="menu-header small text-uppercase">
-              <span class="menu-header-text">Finance / वित्त</span>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.fees.collections.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.fees.collections.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-cash"></i>
-                  <div>Fee Collection</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.fees.structures.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.fees.structures.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-file-invoice"></i>
-                  <div>Fee Structure</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.fees.heads.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.fees.heads.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-tags"></i>
-                  <div>Fee Heads</div>
-              </a>
-          </li>
-          @endif
-
-          <li class="menu-header small text-uppercase">
-              <span class="menu-header-text">Attendance / उपस्थिति</span>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.attendance.students.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.attendance.students.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-user-check"></i>
-                  <div>Student Attendance</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.attendance.staff.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.attendance.staff.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-id-badge"></i>
-                  <div>Staff Attendance</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.attendance.reports.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.attendance.reports.daily') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-chart-bar"></i>
-                  <div>Attendance Reports</div>
-              </a>
-          </li>
-
-          <li class="menu-item {{ request()->routeIs('tenant.timetable.*') ? 'active' : '' }}">
-            <a href="{{ route('tenant.timetable.index') }}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-calendar-time"></i>
-                <div>Timetable / समय-सारणी</div>
-            </a>
-          </li>
-          <li class="menu-header small text-uppercase">
-              <span class="menu-header-text">Results / परीक्षा</span>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.results.exams.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.results.exams.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-clipboard-list"></i>
-                  <div>Exams / परीक्षाएं</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.results.marks.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.results.marks.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-pencil"></i>
-                  <div>Enter Marks / अंक दर्ज</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.results.report-cards.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.results.report-cards.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-certificate"></i>
-                  <div>Report Cards</div>
-              </a>
-          </li>
-          <li class="menu-item {{ request()->routeIs('tenant.results.grade-scales.*') ? 'active' : '' }}">
-              <a href="{{ route('tenant.results.grade-scales.index') }}" class="menu-link">
-                  <i class="menu-icon icon-base ti tabler-award"></i>
-                  <div>Grade Scale</div>
-              </a>
-          </li>
-
-          <li class="menu-item {{ request()->routeIs('tenant.settings.*') ? 'active' : '' }}">
-            <a href="{{ route('tenant.settings.school.edit') }}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-settings"></i>
-                <div>School Settings</div>
-            </a>
-          </li>
+          {{-- /isParent --}}
 
         </ul>
       </aside>
-      {{-- / Sidebar --}}
+      {{-- /Sidebar --}}
 
       <div class="layout-page">
 
-        {{-- Navbar --}}
+        {{-- ===================== NAVBAR ===================== --}}
         <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme">
           <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
             <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
@@ -262,7 +287,7 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
             </a>
           </div>
 
-          {{-- Top Banner for larger screens --}}
+          {{-- Subscription banner (large screens) --}}
           @if(isset($subscriptionBanner))
             @php $banner = $subscriptionBanner; @endphp
             <div class="d-none d-xl-flex align-items-center gap-2 flex-grow-1">
@@ -328,7 +353,7 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
             </ul>
           </div>
         </nav>
-        {{-- / Navbar --}}
+        {{-- /Navbar --}}
 
         {{-- Content Wrapper --}}
         <div class="content-wrapper">
@@ -337,9 +362,8 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
           </div>
           <div class="content-backdrop fade"></div>
         </div>
-        {{-- / Content Wrapper --}}
-
       </div>
+
     </div>
     <div class="layout-overlay layout-menu-toggle"></div>
     <div class="drag-target"></div>
@@ -347,7 +371,6 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
 @endsection
 
 @push('scripts')
-  <!-- Include Scripts -->
   @vite(['resources/assets/js/hindi-autofill.js'])
   @vite(['resources/assets/js/swal-confirms.js'])
 @endpush
