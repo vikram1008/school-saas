@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SuperAdmin\SchoolLogoController;
 use App\Http\Controllers\SuperAdmin\SettingsController;
 use App\Http\Controllers\SuperAdmin\SubscriptionController;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,12 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [SuperAdminAuth::class, 'logout'])->name('logout');
 
+        Route::get('/schools/logos', [SchoolLogoController::class, 'index'])
+            ->name('schools.logos');
+        Route::post('/schools/{tenant}/logo', [SchoolLogoController::class, 'updateLogo'])
+            ->name('schools.logo.update');
+        Route::delete('/schools/{tenant}/logo', [SchoolLogoController::class, 'removeLogo'])
+            ->name('schools.logo.remove');
         Route::resource('schools', SchoolController::class);
 
 

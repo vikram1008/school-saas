@@ -17,6 +17,11 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
 
 @extends('layouts/commonMaster')
 
+@push('head')
+@php $__schoolSettings = \App\Models\SchoolSettings::current(); @endphp
+<link rel="icon" type="image/x-icon" href="{{ asset($__schoolSettings->favicon_url) }}" />
+@endpush
+
 @section('layoutContent')
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
@@ -25,9 +30,7 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
       <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
         <div class="app-brand demo">
           <a href="{{ route('tenant.dashboard') }}" class="app-brand-link">
-            <span class="app-brand-text demo menu-text fw-bold">
-              {{ tenant('school_name') }}
-            </span>
+            @include('tenant.partials.school-logo', ['size' => 'sm', 'showName' => true, 'darkMode' => false])
           </a>
           <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
             <i class="icon-base ti tabler-x"></i>
@@ -236,6 +239,13 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
                   <i class="menu-icon icon-base ti tabler-award"></i>
                   <div>Grade Scale</div>
               </a>
+          </li>
+
+          <li class="menu-item {{ request()->routeIs('tenant.settings.*') ? 'active' : '' }}">
+            <a href="{{ route('tenant.settings.school.edit') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-settings"></i>
+                <div>School Settings</div>
+            </a>
           </li>
 
         </ul>

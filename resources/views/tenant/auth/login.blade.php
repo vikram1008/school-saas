@@ -1,6 +1,7 @@
 @php
   $customizerHidden = 'customizer-hide';
   $configData = Helper::appClasses();
+  $loginSettings = \App\Models\SchoolSettings::current();
 @endphp
 
 @extends('layouts/blankLayout')
@@ -36,12 +37,16 @@
 
           {{-- Brand --}}
           <div class="app-brand justify-content-center mb-6">
-            <a href="{{ route('tenant.home') }}" class="app-brand-link gap-2">
-              <i class="icon-base ti tabler-building" style="font-size:2rem; color: var(--bs-primary)"></i>
-              <span class="app-brand-text demo text-heading fw-bold">
-                {{ $school->school_name }}
-              </span>
-            </a>
+            <div class="text-center mb-4">
+              <img src="{{ $loginSettings->logo_url }}"
+                  alt="{{ $loginSettings->school_name }}"
+                  style="max-height:80px; max-width:200px; object-fit:contain;"
+                  onerror="this.style.display='none'">
+              <h5 class="fw-bold mt-2 mb-0">{{ $loginSettings->school_name }}</h5>
+              @if($loginSettings->school_name_hi)
+                  <p class="text-muted small mb-0">{{ $loginSettings->school_name_hi }}</p>
+              @endif
+            </div>
           </div>
 
           <h4 class="mb-1">Welcome back! 👋</h4>

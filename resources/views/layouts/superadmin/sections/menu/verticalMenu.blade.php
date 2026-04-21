@@ -67,6 +67,13 @@ $configData = Helper::appClasses();
       <div data-i18n="Settings">Global Settings</div>
     </a>
   </li>
+
+  <li class="menu-item {{ request()->routeIs('superadmin.schools.logos') ? 'active' : '' }}">
+    <a href="{{ route('superadmin.schools.logos') }}" class="menu-link">
+        <i class="menu-icon icon-base ti tabler-photo-up"></i>
+        <div>School Logos</div>
+    </a>
+  </li>
 </ul>
 
 </aside>

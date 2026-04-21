@@ -3,15 +3,16 @@
 @section('title', 'Add Staff')
 
 @section('vendor-style')
-    @vite(['resources/assets/vendor/libs/bs-stepper/bs-stepper.scss'])
+    @vite(['resources/assets/vendor/libs/bs-stepper/bs-stepper.scss',
+           'resources/assets/vendor/libs/flatpickr/flatpickr.scss'])
 @endsection
 
 @section('page-style')
-    
 @endsection
 
 @section('vendor-script')
-    @vite(['resources/assets/vendor/libs/bs-stepper/bs-stepper.js'])
+    @vite(['resources/assets/vendor/libs/bs-stepper/bs-stepper.js',
+           'resources/assets/vendor/libs/flatpickr/flatpickr.js'])
 @endsection
 
 @section('content')
@@ -26,8 +27,7 @@
         <div>
             <h4 class="fw-bold mb-0">Add Staff / नया स्टाफ जोड़ें</h4>
             <p class="text-muted small mb-0">
-                <span class="text-danger">*</span> Required &nbsp;|&nbsp;
-                <span class="badge bg-label-warning">हिं</span> = Hindi field
+                <span class="text-danger">*</span> Required fields must be filled before proceeding.
             </p>
         </div>
     </div>
@@ -47,7 +47,9 @@
 
     <form action="{{ route('tenant.staff.store') }}"
           method="POST"
-          enctype="multipart/form-data">
+          enctype="multipart/form-data"
+          id="staffCreateForm"
+          novalidate>
         @csrf
 
         <div class="bs-stepper vertical wizard-modern wizard-modern-vertical">
@@ -55,12 +57,12 @@
             {{-- Stepper Header --}}
             <div class="bs-stepper-header">
                 @foreach([
-                    ['step-basic',    'tabler-clipboard-list', 'Basic Info',    'Employee code & type'],
-                    ['step-personal', 'tabler-user',           'Personal',      'Name, DOB, Identity'],
-                    ['step-professional', 'tabler-briefcase',  'Professional',  'Designation & Salary'],
-                    ['step-address',  'tabler-map-pin',        'Address / पता', 'Permanent & Current'],
-                    ['step-subjects', 'tabler-book',           'Subjects',      'Teaching assignments'],
-                    ['step-documents','tabler-file',           'Documents',     'Upload certificates'],
+                    ['step-basic',        'tabler-clipboard-list', 'Basic Info',    'Employee code & type'],
+                    ['step-personal',     'tabler-user',           'Personal',      'Name, DOB, Identity'],
+                    ['step-professional', 'tabler-briefcase',      'Professional',  'Designation & Salary'],
+                    ['step-address',      'tabler-map-pin',        'Address / पता', 'Permanent & Current'],
+                    ['step-subjects',     'tabler-book',           'Subjects',      'Teaching assignments'],
+                    ['step-documents',    'tabler-file',           'Documents',     'Upload certificates'],
                 ] as $i => [$id, $icon, $title, $subtitle])
                     @if($i > 0) <div class="line"></div> @endif
                     <div class="step {{ $i === 0 ? 'active' : '' }}" data-target="#{{ $id }}">
@@ -83,34 +85,35 @@
                 <div id="step-basic" class="content dstepper-block active show">
                     <div class="content-header mb-4">
                         <h6 class="mb-0">Basic Information / मूल जानकारी</h6>
-                        <small>Employee code, staff type and login details.</small>
+                        <small class="text-muted">Fields marked <span class="text-danger">*</span> are required.</small>
                     </div>
                     <div class="row g-4">
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">
                                 Employee Code <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="employee_code"
+                            <input type="text"
+                                   name="employee_code"
+                                   id="employee_code"
                                    class="form-control @error('employee_code') is-invalid @enderror"
                                    value="{{ old('employee_code') }}"
                                    placeholder="e.g. EMP-001"
-                                   data-required="true">
-                            @error('employee_code')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text">
-                                Default login password = employee code
+                                   required>
+                            <div class="invalid-feedback">
+                                @error('employee_code'){{ $message }}@else Employee code is required.@enderror
                             </div>
+                            <div class="form-text">Default login password = employee code</div>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">
                                 Staff Type <span class="text-danger">*</span>
                             </label>
-                            <select name="staff_type" class="form-select"
+                            <select name="staff_type"
                                     id="staffTypeSelect"
-                                    data-required="true"
+                                    class="form-select @error('staff_type') is-invalid @enderror"
+                                    required
                                     onchange="handleStaffType(this.value)">
-                                <option value="">Select Type</option>
+                                <option value="">— Select Type —</option>
                                 @foreach(\App\Models\StaffProfile::typeLabels() as $val => $label)
                                     <option value="{{ $val }}"
                                         {{ old('staff_type') == $val ? 'selected' : '' }}>
@@ -118,20 +121,24 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="invalid-feedback">
+                                @error('staff_type'){{ $message }}@else Please select staff type.@enderror
+                            </div>
                         </div>
                         <div class="col-sm-4">
-                            <label class="form-label fw-semibold">Login Email (Optional)</label>
-                            <input type="email" name="email"
+                            <label class="form-label fw-semibold">Login Email <span class="text-muted small">(Optional)</span></label>
+                            <input type="email"
+                                   name="email"
                                    class="form-control"
                                    value="{{ old('email') }}"
                                    placeholder="Auto-generated if empty">
                             <div class="form-text">Leave blank to auto-generate</div>
                         </div>
                         <div class="col-12 d-flex justify-content-end">
-                            <button type="button" class="btn btn-primary btn-next"
+                            <button type="button"
+                                    class="btn btn-primary btn-next"
                                     data-step="step-basic">
-                                <span class="me-2">Next</span>
-                                <i class="icon-base ti tabler-arrow-right icon-xs"></i>
+                                Next <i class="icon-base ti tabler-arrow-right icon-xs ms-1"></i>
                             </button>
                         </div>
                     </div>
@@ -141,8 +148,10 @@
                 <div id="step-personal" class="content dstepper-block">
                     <div class="content-header mb-4">
                         <h6 class="mb-0">Personal Information / व्यक्तिगत जानकारी</h6>
+                        <small class="text-muted">Fields marked <span class="text-danger">*</span> are required.</small>
                     </div>
                     <div class="row g-4">
+
                         {{-- Photo --}}
                         <div class="col-12 text-center">
                             <img id="photoPreview"
@@ -151,11 +160,13 @@
                                  width="90" height="90"
                                  style="object-fit:cover; border:3px solid #eee;">
                             <div>
-                                <input type="file" name="photo"
+                                <input type="file"
+                                       name="photo"
                                        class="form-control form-control-sm d-inline-block"
-                                       style="width:auto" accept="image/*"
+                                       style="width:auto"
+                                       accept="image/*"
                                        onchange="previewPhoto(this)">
-                                <div class="form-text">Photo — Max 2MB</div>
+                                <div class="form-text">Photo — Max 2MB (optional)</div>
                             </div>
                         </div>
 
@@ -163,91 +174,122 @@
                             <label class="form-label fw-semibold">
                                 First Name <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="first_name"
+                            <input type="text"
+                                   name="first_name"
+                                   id="first_name"
                                    class="form-control @error('first_name') is-invalid @enderror"
                                    value="{{ old('first_name') }}"
-                                   data-required="true">
-                            @error('first_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                   data-hindi-target="[name='first_name_hi']"
+                                   required
+                                   maxlength="100">
+                            <div class="invalid-feedback">
+                                @error('first_name'){{ $message }}@else First name is required.@enderror
+                            </div>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">
                                 प्रथम नाम <span class="badge bg-label-warning">हिं</span>
                             </label>
-                            <input type="text" name="first_name_hi"
+                            <input type="text"
+                                   name="first_name_hi"
                                    class="form-control"
                                    value="{{ old('first_name_hi') }}"
                                    placeholder="हिंदी में">
                         </div>
+
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">
                                 Last Name <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="last_name"
+                            <input type="text"
+                                   name="last_name"
+                                   id="last_name"
                                    class="form-control @error('last_name') is-invalid @enderror"
                                    value="{{ old('last_name') }}"
-                                   data-required="true">
-                            @error('last_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                   data-hindi-target="[name='last_name_hi']"
+                                   required
+                                   maxlength="100">
+                            <div class="invalid-feedback">
+                                @error('last_name'){{ $message }}@else Last name is required.@enderror
+                            </div>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">
                                 उपनाम <span class="badge bg-label-warning">हिं</span>
                             </label>
-                            <input type="text" name="last_name_hi"
+                            <input type="text"
+                                   name="last_name_hi"
                                    class="form-control"
                                    value="{{ old('last_name_hi') }}"
                                    placeholder="हिंदी में">
                         </div>
+
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">
                                 Gender <span class="text-danger">*</span>
                             </label>
-                            <select name="gender" class="form-select" data-required="true">
-                                <option value="">Select</option>
-                                <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male / पुरुष</option>
+                            <select name="gender"
+                                    id="gender"
+                                    class="form-select @error('gender') is-invalid @enderror"
+                                    required>
+                                <option value="">— Select Gender —</option>
+                                <option value="male"   {{ old('gender') == 'male'   ? 'selected' : '' }}>Male / पुरुष</option>
                                 <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female / महिला</option>
-                                <option value="other" {{ old('gender') == 'other' ? 'selected' : '' }}>Other</option>
+                                <option value="other"  {{ old('gender') == 'other'  ? 'selected' : '' }}>Other / अन्य</option>
                             </select>
+                            <div class="invalid-feedback">
+                                @error('gender'){{ $message }}@else Please select gender.@enderror
+                            </div>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Date of Birth</label>
                             <input type="text"
-                                    name="date_of_birth"
-                                    id="staffDob"
-                                    class="form-control flatpickr-input"
-                                    placeholder="Date of Birth"
-                                    value="{{ old('date_of_birth') }}"
-                                    autocomplete="off" readonly>
+                                   name="date_of_birth"
+                                   id="staffDob"
+                                   class="form-control"
+                                   placeholder="Select date"
+                                   value="{{ old('date_of_birth') }}"
+                                   autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Blood Group</label>
                             <select name="blood_group" class="form-select">
-                                <option value="">Select</option>
+                                <option value="">— Select —</option>
                                 @foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $bg)
                                     <option value="{{ $bg }}" {{ old('blood_group') == $bg ? 'selected' : '' }}>{{ $bg }}</option>
                                 @endforeach
                             </select>
                         </div>
+
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Aadhaar Number</label>
-                            <input type="text" name="aadhaar_number"
+                            <input type="text"
+                                   name="aadhaar_number"
                                    class="form-control"
                                    value="{{ old('aadhaar_number') }}"
-                                   placeholder="12-digit" maxlength="12">
+                                   placeholder="12-digit"
+                                   maxlength="12"
+                                   pattern="\d{12}"
+                                   inputmode="numeric">
+                            <div class="invalid-feedback">Must be exactly 12 digits.</div>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">PAN Number</label>
-                            <input type="text" name="pan_number"
+                            <input type="text"
+                                   name="pan_number"
                                    id="panNumber"
                                    class="form-control"
                                    value="{{ old('pan_number') }}"
                                    placeholder="e.g. ABCDE1234F"
                                    maxlength="10"
+                                   pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
                                    style="text-transform:uppercase">
+                            <div class="invalid-feedback">Invalid PAN format (e.g. ABCDE1234F).</div>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">ID Proof Type</label>
                             <select name="id_proof_type" class="form-select">
-                                <option value="">Select</option>
+                                <option value="">— Select —</option>
                                 @foreach(['aadhaar'=>'Aadhaar','pan'=>'PAN Card','voter_id'=>'Voter ID','passport'=>'Passport','driving_license'=>'Driving License'] as $val=>$lbl)
                                     <option value="{{ $val }}" {{ old('id_proof_type') == $val ? 'selected' : '' }}>{{ $lbl }}</option>
                                 @endforeach
@@ -260,21 +302,23 @@
                                    value="{{ old('id_proof_number') }}">
                         </div>
 
-                        {{-- Contact --}}
-                        <div class="col-12"><hr class="my-1"><small class="fw-semibold text-muted">Contact</small></div>
+                        <div class="col-12"><hr class="my-1"><p class="fw-semibold small text-muted mb-0">Contact / संपर्क</p></div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Mobile</label>
                             <input type="text" name="phone" class="form-control"
-                                   value="{{ old('phone') }}">
+                                   value="{{ old('phone') }}"
+                                   placeholder="10-digit mobile"
+                                   maxlength="15">
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">WhatsApp</label>
                             <input type="text" name="whatsapp" class="form-control"
-                                   value="{{ old('whatsapp') }}">
+                                   value="{{ old('whatsapp') }}"
+                                   placeholder="WhatsApp number"
+                                   maxlength="15">
                         </div>
 
-                        {{-- Emergency --}}
-                        <div class="col-12"><hr class="my-1"><small class="fw-semibold text-muted">Emergency Contact</small></div>
+                        <div class="col-12"><hr class="my-1"><p class="fw-semibold small text-muted mb-0">Emergency Contact / आपातकालीन संपर्क</p></div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Emergency Contact Name</label>
                             <input type="text" name="emergency_contact_name"
@@ -290,12 +334,11 @@
 
                         <div class="col-12 d-flex justify-content-between">
                             <button type="button" class="btn btn-label-secondary btn-prev">
-                                <i class="icon-base ti tabler-arrow-left icon-xs me-2"></i>Previous
+                                <i class="icon-base ti tabler-arrow-left icon-xs me-1"></i> Previous
                             </button>
                             <button type="button" class="btn btn-primary btn-next"
                                     data-step="step-personal">
-                                <span class="me-2">Next</span>
-                                <i class="icon-base ti tabler-arrow-right icon-xs"></i>
+                                Next <i class="icon-base ti tabler-arrow-right icon-xs ms-1"></i>
                             </button>
                         </div>
                     </div>
@@ -315,7 +358,7 @@
                                            class="form-control"
                                            value="{{ old('designation') }}"
                                            placeholder="e.g. Principal, TGT, PRT"
-                                           id="designationInput">
+                                           data-hindi-target="[name='designation_hi']">
                                 </div>
                                 <div class="col-5">
                                     <input type="text" name="designation_hi"
@@ -332,7 +375,8 @@
                                     <input type="text" name="department"
                                            class="form-control"
                                            value="{{ old('department') }}"
-                                           placeholder="e.g. Science, Administration">
+                                           placeholder="e.g. Science, Administration"
+                                           data-hindi-target="[name='department_hi']">
                                 </div>
                                 <div class="col-5">
                                     <input type="text" name="department_hi"
@@ -349,7 +393,8 @@
                                     <input type="text" name="qualification"
                                            class="form-control"
                                            value="{{ old('qualification') }}"
-                                           placeholder="e.g. B.Ed, M.Sc, MBA">
+                                           placeholder="e.g. B.Ed, M.Sc, MBA"
+                                           data-hindi-target="[name='qualification_hi']">
                                 </div>
                                 <div class="col-5">
                                     <input type="text" name="qualification_hi"
@@ -377,12 +422,12 @@
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Joining Date</label>
                             <input type="text"
-                                    name="joining_date"
-                                    id="staffJoiningDate"
-                                    class="form-control flatpickr-input"
-                                    placeholder="Joining Date"
-                                    value="{{ old('joining_date') }}"
-                                    autocomplete="off" readonly>
+                                   name="joining_date"
+                                   id="staffJoiningDate"
+                                   class="form-control"
+                                   placeholder="Select joining date"
+                                   value="{{ old('joining_date') }}"
+                                   autocomplete="off" readonly>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label fw-semibold">Monthly Salary (₹)</label>
@@ -397,12 +442,11 @@
 
                         <div class="col-12 d-flex justify-content-between">
                             <button type="button" class="btn btn-label-secondary btn-prev">
-                                <i class="icon-base ti tabler-arrow-left icon-xs me-2"></i>Previous
+                                <i class="icon-base ti tabler-arrow-left icon-xs me-1"></i> Previous
                             </button>
                             <button type="button" class="btn btn-primary btn-next"
                                     data-step="step-professional">
-                                <span class="me-2">Next</span>
-                                <i class="icon-base ti tabler-arrow-right icon-xs"></i>
+                                Next <i class="icon-base ti tabler-arrow-right icon-xs ms-1"></i>
                             </button>
                         </div>
                     </div>
@@ -434,7 +478,8 @@
                                         <input type="text" name="{{ $f }}"
                                                class="form-control form-control-sm"
                                                value="{{ old($f) }}"
-                                               placeholder="{{ $ph }}">
+                                               placeholder="{{ $ph }}"
+                                               data-hindi-target="[name='{{ $fhi }}']">
                                     </div>
                                     <div class="col-6">
                                         <input type="text" name="{{ $fhi }}"
@@ -450,7 +495,11 @@
                             <input type="text" name="perm_pincode"
                                    class="form-control"
                                    value="{{ old('perm_pincode') }}"
-                                   maxlength="6">
+                                   placeholder="6-digit PIN"
+                                   maxlength="6"
+                                   pattern="\d{6}"
+                                   inputmode="numeric">
+                            <div class="invalid-feedback">PIN code must be 6 digits.</div>
                         </div>
 
                         <div class="col-12 mt-2">
@@ -490,12 +539,11 @@
 
                         <div class="col-12 d-flex justify-content-between">
                             <button type="button" class="btn btn-label-secondary btn-prev">
-                                <i class="icon-base ti tabler-arrow-left icon-xs me-2"></i>Previous
+                                <i class="icon-base ti tabler-arrow-left icon-xs me-1"></i> Previous
                             </button>
                             <button type="button" class="btn btn-primary btn-next"
                                     data-step="step-address">
-                                <span class="me-2">Next</span>
-                                <i class="icon-base ti tabler-arrow-right icon-xs"></i>
+                                Next <i class="icon-base ti tabler-arrow-right icon-xs ms-1"></i>
                             </button>
                         </div>
                     </div>
@@ -505,11 +553,10 @@
                 <div id="step-subjects" class="content dstepper-block">
                     <div class="content-header mb-4">
                         <h6 class="mb-0">Subject Assignments / विषय असाइनमेंट</h6>
-                        <small>Only applicable for teaching staff.</small>
+                        <small class="text-muted">Only applicable for teaching staff.</small>
                     </div>
                     <div id="subjectAssignmentSection">
-                        <div class="alert alert-info small mb-3" id="nonTeachingNotice"
-                            style="display:none;">
+                        <div class="alert alert-info small mb-3" id="nonTeachingNotice" style="display:none;">
                             <i class="icon-base ti tabler-info-circle me-1"></i>
                             Subject assignments are only for teaching staff.
                         </div>
@@ -521,7 +568,7 @@
                                         <select name="assignments[0][class_id]"
                                                 class="form-select form-select-sm"
                                                 onchange="loadSectionsForAssignment(this, 0)">
-                                            <option value="">Select Class</option>
+                                            <option value="">— Select Class —</option>
                                             @foreach($classes as $class)
                                                 <option value="{{ $class->id }}">{{ $class->name }}</option>
                                             @endforeach
@@ -541,11 +588,9 @@
                                                 id="subject-select-0"
                                                 class="form-select form-select-sm"
                                                 onchange="syncSubjectHi(this, 0)">
-                                            <option value="">Select Subject</option>
+                                            <option value="">— Select Subject —</option>
                                         </select>
-                                        <input type="hidden"
-                                            name="assignments[0][subject_name_hi]"
-                                            id="subject-hi-0">
+                                        <input type="hidden" name="assignments[0][subject_name_hi]" id="subject-hi-0">
                                     </div>
                                     <div class="col-sm-1">
                                         <button type="button"
@@ -562,19 +607,17 @@
                                 class="btn btn-outline-primary btn-sm mt-2"
                                 id="addAssignmentBtn"
                                 onclick="addAssignmentRow()">
-                            <i class="icon-base ti tabler-plus me-1"></i>
-                            Add Another Subject
+                            <i class="icon-base ti tabler-plus me-1"></i> Add Another Subject
                         </button>
                     </div>
 
                     <div class="col-12 d-flex justify-content-between mt-4">
                         <button type="button" class="btn btn-label-secondary btn-prev">
-                            <i class="icon-base ti tabler-arrow-left icon-xs me-2"></i>Previous
+                            <i class="icon-base ti tabler-arrow-left icon-xs me-1"></i> Previous
                         </button>
                         <button type="button" class="btn btn-primary btn-next"
                                 data-step="step-subjects">
-                            <span class="me-2">Next</span>
-                            <i class="icon-base ti tabler-arrow-right icon-xs"></i>
+                            Next <i class="icon-base ti tabler-arrow-right icon-xs ms-1"></i>
                         </button>
                     </div>
                 </div>
@@ -583,15 +626,13 @@
                 <div id="step-documents" class="content dstepper-block">
                     <div class="content-header mb-4">
                         <h6 class="mb-0">Documents / दस्तावेज़</h6>
-                        <small>Upload PDF, JPG or PNG. Max 2MB each.</small>
+                        <small class="text-muted">Upload PDF, JPG or PNG. Max 2MB each. All optional.</small>
                     </div>
                     <div class="row g-3">
                         @foreach(\App\Models\StaffDocument::typeLabels() as $type => $label)
                             <div class="col-md-6">
                                 <div class="border rounded p-3">
-                                    <label class="form-label fw-semibold small mb-2 d-block">
-                                        {{ $label }}
-                                    </label>
+                                    <label class="form-label fw-semibold small mb-2 d-block">{{ $label }}</label>
                                     <input type="file"
                                            name="documents[{{ $type }}]"
                                            class="form-control form-control-sm"
@@ -603,9 +644,9 @@
 
                     <div class="d-flex justify-content-between mt-4">
                         <button type="button" class="btn btn-label-secondary btn-prev">
-                            <i class="icon-base ti tabler-arrow-left icon-xs me-2"></i>Previous
+                            <i class="icon-base ti tabler-arrow-left icon-xs me-1"></i> Previous
                         </button>
-                        <button type="submit" class="btn btn-success btn-lg">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
                             <i class="icon-base ti tabler-user-plus me-2"></i>
                             Add Staff Member
                         </button>
@@ -620,65 +661,178 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Stepper init ─────────────────────────────────────────────────
     const stepper = new Stepper(document.querySelector('.bs-stepper'), {
-        linear: false, animation: false
+        linear: false,
+        animation: false
     });
     stepper.to(1);
-    document.querySelectorAll('.bs-stepper').forEach(el => {
-        el.addEventListener('show.bs-stepper', function(e) {
-            setTimeout(() => initFlatpickrs(document), 150);
-        });
-    });
 
-    const stepRequired = {
-        'step-basic':    ['employee_code', 'staff_type'],
-        'step-personal': ['first_name', 'last_name', 'gender'],
+    // ── Validation rules per step ────────────────────────────────────
+    // Each entry: { fieldId, label, type: 'input'|'select', message }
+    const stepValidations = {
+        'step-basic': [
+            { id: 'employee_code', label: 'Employee Code',  type: 'input',  msg: 'Employee code is required.' },
+            { id: 'staffTypeSelect', label: 'Staff Type',   type: 'select', msg: 'Please select a staff type.' },
+        ],
+        'step-personal': [
+            { id: 'first_name', label: 'First Name', type: 'input',  msg: 'First name is required.' },
+            { id: 'last_name',  label: 'Last Name',  type: 'input',  msg: 'Last name is required.' },
+            { id: 'gender',     label: 'Gender',     type: 'select', msg: 'Please select gender.' },
+        ],
     };
 
+    // ── Core validation function ─────────────────────────────────────
     function validateStep(stepId) {
-        const required = stepRequired[stepId] || [];
-        let valid = true;
-        required.forEach(name => {
-            const field = document.querySelector(`[name="${name}"]`);
-            if (!field || !field.value.trim()) {
-                if (field) field.classList.add('is-invalid');
-                valid = false;
+        const rules   = stepValidations[stepId] || [];
+        const errors  = [];
+        let firstInvalidField = null;
+
+        rules.forEach(rule => {
+            const field = document.getElementById(rule.id);
+            if (!field) return;
+
+            const isEmpty = field.tagName === 'SELECT'
+                ? field.value === '' || field.value === null
+                : field.value.trim() === '';
+
+            if (isEmpty) {
+                // Show inline error
+                field.classList.add('is-invalid');
+                field.classList.remove('is-valid');
+
+                // Ensure invalid-feedback message is set
+                let fb = field.parentElement.querySelector('.invalid-feedback');
+                if (fb) fb.textContent = rule.msg;
+
+                errors.push(rule.msg);
+                if (!firstInvalidField) firstInvalidField = field;
             } else {
                 field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
             }
         });
-        return valid;
+
+        if (errors.length > 0) {
+            // Focus first invalid field
+            if (firstInvalidField) firstInvalidField.focus();
+
+            // SweetAlert error
+            Swal.fire({
+                icon: 'warning',
+                title: 'Required Fields Missing',
+                html: '<ul class="text-start mb-0 ps-3">'
+                    + errors.map(e => `<li>${e}</li>`).join('')
+                    + '</ul>',
+                confirmButtonText: 'OK, let me fix it',
+                customClass: {
+                    confirmButton: 'btn btn-primary waves-effect waves-light',
+                },
+                buttonsStyling: false,
+            });
+            return false;
+        }
+
+        return true;
     }
 
-    function updateNextBtn(stepId) {
-        const required = stepRequired[stepId] || [];
-        const btn = document.querySelector(`#${stepId} .btn-next`);
-        if (!btn) return;
-        btn.disabled = !required.every(name => {
-            const f = document.querySelector(`[name="${name}"]`);
-            return f && f.value.trim() !== '';
+    // ── Live validation on field change ──────────────────────────────
+    function attachLiveValidation(stepId) {
+        const rules = stepValidations[stepId] || [];
+        rules.forEach(rule => {
+            const field = document.getElementById(rule.id);
+            if (!field) return;
+
+            const eventType = field.tagName === 'SELECT' ? 'change' : 'input';
+            field.addEventListener(eventType, function () {
+                const isEmpty = field.tagName === 'SELECT'
+                    ? this.value === ''
+                    : this.value.trim() === '';
+
+                if (!isEmpty) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                }
+            });
         });
     }
 
+    // Attach live validation for all steps
+    Object.keys(stepValidations).forEach(attachLiveValidation);
+
+    // ── Next button → validate current step ──────────────────────────
     document.querySelectorAll('.btn-next').forEach(btn => {
-        const stepId = btn.dataset.step;
-        updateNextBtn(stepId);
-        const required = stepRequired[stepId] || [];
-        required.forEach(name => {
-            const field = document.querySelector(`[name="${name}"]`);
-            if (field) {
-                field.addEventListener('input', () => updateNextBtn(stepId));
-                field.addEventListener('change', () => updateNextBtn(stepId));
+        btn.addEventListener('click', function () {
+            const stepId = this.dataset.step;
+            if (validateStep(stepId)) {
+                stepper.next();
             }
-        });
-        btn.addEventListener('click', () => {
-            if (validateStep(stepId)) stepper.next();
         });
     });
 
+    // ── Prev button ───────────────────────────────────────────────────
     document.querySelectorAll('.btn-prev').forEach(btn => {
         btn.addEventListener('click', () => stepper.previous());
     });
+
+    // ── Submit → validate all required steps before sending ──────────
+    document.getElementById('staffCreateForm').addEventListener('submit', function (e) {
+        // Validate all steps that have rules
+        const allStepIds = Object.keys(stepValidations);
+        let firstFailedStep = null;
+
+        const allErrors = [];
+
+        allStepIds.forEach(stepId => {
+            const rules = stepValidations[stepId] || [];
+            rules.forEach(rule => {
+                const field = document.getElementById(rule.id);
+                if (!field) return;
+
+                const isEmpty = field.tagName === 'SELECT'
+                    ? field.value === ''
+                    : field.value.trim() === '';
+
+                if (isEmpty) {
+                    field.classList.add('is-invalid');
+                    allErrors.push({ stepId, msg: rule.msg, field });
+                    if (!firstFailedStep) firstFailedStep = stepId;
+                }
+            });
+        });
+
+        if (allErrors.length > 0) {
+            e.preventDefault();
+
+            // Jump to first step with error
+            if (firstFailedStep) {
+                const stepIndex = Object.keys(stepValidations).indexOf(firstFailedStep);
+                // Map stepId to stepper index (step-basic=0, step-personal=1...)
+                const stepOrder = ['step-basic','step-personal','step-professional','step-address','step-subjects','step-documents'];
+                const idx = stepOrder.indexOf(firstFailedStep);
+                if (idx >= 0) stepper.to(idx + 1);
+            }
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Incomplete Form',
+                html: '<p class="mb-2">Please complete all required fields:</p>'
+                    + '<ul class="text-start mb-0 ps-3">'
+                    + allErrors.map(e => `<li>${e.msg}</li>`).join('')
+                    + '</ul>',
+                confirmButtonText: 'Fix Now',
+                customClass: {
+                    confirmButton: 'btn btn-danger waves-effect waves-light',
+                },
+                buttonsStyling: false,
+            });
+        }
+    });
+
+    // ── Utility functions ─────────────────────────────────────────────
 
     window.previewPhoto = function(input) {
         if (input.files && input.files[0]) {
@@ -690,29 +844,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.toggleCurrAddress = function(cb) {
         document.getElementById('currAddressFields').style.display = cb.checked ? 'none' : 'block';
-    };
-
-    window.handleStaffType = function(type) {
-        const notice = document.getElementById('nonTeachingNotice');
-        const container = document.getElementById('assignmentsContainer');
-        const addBtn = document.getElementById('addAssignmentBtn');
-        if (type === 'teaching') {
-            notice.style.display = 'none';
-            container.style.display = 'block';
-            addBtn.style.display = 'inline-block';
-        } else {
-            notice.style.display = 'block';
-            container.style.display = 'none';
-            addBtn.style.display = 'none';
-        }
-    };
-
-    // ── Subject helpers ──────────────────────────────────────────────
-
-    window.syncSubjectHi = function(select, idx) {
-        const hi = select.options[select.selectedIndex]?.dataset.hi || '';
-        const hiddenHi = document.getElementById(`subject-hi-${idx}`);
-        if (hiddenHi) hiddenHi.value = hi;
     };
 
     window.handleStaffType = function(type) {
@@ -730,63 +861,56 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    const staffType = document.getElementById('staffTypeSelect').value;
-    if (staffType) handleStaffType(staffType);
+    // Init staff type state from old() value
+    const currentStaffType = document.getElementById('staffTypeSelect').value;
+    if (currentStaffType) handleStaffType(currentStaffType);
 
-    window.loadSectionsForAssignment = async function(
-        select, idx,
-        restoreSection = null,
-        restoreSubject = null
-    ) {
+    // ── Subject helpers ───────────────────────────────────────────────
+
+    window.syncSubjectHi = function(select, idx) {
+        const hi = select.options[select.selectedIndex]?.dataset.hi || '';
+        const hiddenHi = document.getElementById(`subject-hi-${idx}`);
+        if (hiddenHi) hiddenHi.value = hi;
+    };
+
+    window.loadSectionsForAssignment = async function(select, idx, restoreSection = null, restoreSubject = null) {
         const classId       = select.value;
         const sectionSelect = document.getElementById(`section-select-${idx}`);
         const subjectSelect = document.getElementById(`subject-select-${idx}`);
 
         sectionSelect.innerHTML = '<option value="">All</option>';
-        if (subjectSelect) {
-            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
-        }
+        if (subjectSelect) subjectSelect.innerHTML = '<option value="">— Select Subject —</option>';
         if (!classId) return;
 
-        // Sections
         try {
-            const res      = await fetch(`/classes/${classId}/sections`);
-            const sections = await res.json();
+            const sections = await (await fetch(`/classes/${classId}/sections`)).json();
             sections.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.name;
+                const opt = new Option(s.name, s.id);
                 if (restoreSection && s.id == restoreSection) opt.selected = true;
-                sectionSelect.appendChild(opt);
+                sectionSelect.add(opt);
             });
         } catch(e) { console.warn('Sections load failed', e); }
 
-        // Subjects from class_subjects
         if (subjectSelect) {
             try {
-                const res      = await fetch(`/classes/${classId}/subjects`);
-                const subjects = await res.json();
+                const subjects = await (await fetch(`/classes/${classId}/subjects`)).json();
                 subjects.forEach(s => {
-                    const opt       = document.createElement('option');
-                    opt.value       = s.subject_name;
-                    opt.dataset.hi  = s.subject_name_hi || '';
-                    opt.textContent = s.subject_name +
-                        (s.subject_name_hi ? ' · ' + s.subject_name_hi : '');
+                    const opt      = new Option(s.subject_name + (s.subject_name_hi ? ' · ' + s.subject_name_hi : ''), s.subject_name);
+                    opt.dataset.hi = s.subject_name_hi || '';
                     if (restoreSubject && s.subject_name === restoreSubject) {
                         opt.selected = true;
-                        const hiddenHi = document.getElementById(`subject-hi-${idx}`);
-                        if (hiddenHi) hiddenHi.value = s.subject_name_hi || '';
+                        const hi = document.getElementById(`subject-hi-${idx}`);
+                        if (hi) hi.value = s.subject_name_hi || '';
                     }
-                    subjectSelect.appendChild(opt);
+                    subjectSelect.add(opt);
                 });
             } catch(e) { console.warn('Subjects load failed', e); }
         }
     };
 
     let assignmentCount = 1;
-
-    const classOptions = [
-        '<option value="">Select Class</option>',
+    const classOptions  = [
+        '<option value="">— Select Class —</option>',
         @foreach($classes as $class)
             `<option value="{{ $class->id }}">{{ $class->name }}</option>`,
         @endforeach
@@ -800,35 +924,27 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="row g-3 align-items-end">
                 <div class="col-sm-4">
                     <label class="form-label fw-semibold small">Class</label>
-                    <select name="assignments[${idx}][class_id]"
-                            class="form-select form-select-sm"
+                    <select name="assignments[${idx}][class_id]" class="form-select form-select-sm"
                             onchange="loadSectionsForAssignment(this, ${idx})">
                         ${classOptions}
                     </select>
                 </div>
                 <div class="col-sm-3">
                     <label class="form-label fw-semibold small">Section</label>
-                    <select name="assignments[${idx}][section_id]"
-                            class="form-select form-select-sm"
-                            id="section-select-${idx}">
+                    <select name="assignments[${idx}][section_id]" class="form-select form-select-sm" id="section-select-${idx}">
                         <option value="">All</option>
                     </select>
                 </div>
                 <div class="col-sm-4">
                     <label class="form-label fw-semibold small">Subject</label>
-                    <select name="assignments[${idx}][subject_name]"
-                            id="subject-select-${idx}"
-                            class="form-select form-select-sm"
-                            onchange="syncSubjectHi(this, ${idx})">
-                        <option value="">Select Subject</option>
+                    <select name="assignments[${idx}][subject_name]" id="subject-select-${idx}"
+                            class="form-select form-select-sm" onchange="syncSubjectHi(this, ${idx})">
+                        <option value="">— Select Subject —</option>
                     </select>
-                    <input type="hidden"
-                           name="assignments[${idx}][subject_name_hi]"
-                           id="subject-hi-${idx}">
+                    <input type="hidden" name="assignments[${idx}][subject_name_hi]" id="subject-hi-${idx}">
                 </div>
                 <div class="col-sm-1">
-                    <button type="button"
-                            class="btn btn-sm btn-icon btn-outline-danger mt-4"
+                    <button type="button" class="btn btn-sm btn-icon btn-outline-danger mt-4"
                             onclick="this.closest('.assignment-row').remove()">
                         <i class="icon-base ti tabler-trash"></i>
                     </button>
@@ -837,21 +953,12 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('assignmentsContainer').appendChild(row);
     };
 
+    // ── PAN uppercase ─────────────────────────────────────────────────
     document.getElementById('panNumber')?.addEventListener('input', function() {
         this.value = this.value.toUpperCase();
     });
 
-    @if($errors->any())
-        const stepMap = {
-            'employee_code': 0, 'staff_type': 0,
-            'first_name': 1, 'last_name': 1, 'gender': 1
-        };
-        const errorKeys = @json(array_keys($errors->toArray()));
-        for (const key of errorKeys) {
-            if (stepMap[key] !== undefined) { stepper.to(stepMap[key] + 1); break; }
-        }
-    @endif
-
+    // ── Flatpickr ─────────────────────────────────────────────────────
     flatpickr('#staffDob', {
         dateFormat:  'Y-m-d',
         altInput:    true,
@@ -859,7 +966,6 @@ document.addEventListener('DOMContentLoaded', function () {
         maxDate:     'today',
         allowInput:  false,
         defaultDate: '{{ old('date_of_birth') }}' || null,
-        yearRange:   [1950, new Date().getFullYear()],
     });
 
     flatpickr('#staffJoiningDate', {
@@ -869,6 +975,23 @@ document.addEventListener('DOMContentLoaded', function () {
         allowInput:  false,
         defaultDate: '{{ old('joining_date') }}' || null,
     });
+
+    // ── Jump to error step on server validation fail ──────────────────
+    @if($errors->any())
+        const stepOrder    = ['step-basic','step-personal','step-professional','step-address','step-subjects','step-documents'];
+        const serverErrMap = {
+            employee_code: 'step-basic', staff_type: 'step-basic',
+            first_name: 'step-personal', last_name: 'step-personal', gender: 'step-personal',
+        };
+        const errorKeys = @json(array_keys($errors->toArray()));
+        for (const key of errorKeys) {
+            if (serverErrMap[key]) {
+                stepper.to(stepOrder.indexOf(serverErrMap[key]) + 1);
+                break;
+            }
+        }
+    @endif
+
 });
 </script>
 @endpush

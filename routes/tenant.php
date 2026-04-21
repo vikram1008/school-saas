@@ -11,6 +11,7 @@ use App\Http\Controllers\Tenant\NoticeController;
 use App\Http\Controllers\Tenant\ParentController;
 use App\Http\Controllers\Tenant\ParentPortalController;
 use App\Http\Controllers\Tenant\SchoolHomeController;
+use App\Http\Controllers\Tenant\SchoolSettingsController;
 use App\Http\Controllers\Tenant\StaffController;
 use App\Http\Controllers\Tenant\StudentController;
 use App\Http\Controllers\Tenant\SubjectController;
@@ -116,7 +117,12 @@ Route::middleware([
                 );
             })->name('tenant.classes.subjects.list');
 
-            
+            Route::prefix('settings')->name('tenant.settings.')->group(function () {
+                Route::get('/school', [SchoolSettingsController::class, 'edit'])
+                    ->name('school.edit');
+                Route::put('/school', [SchoolSettingsController::class, 'update'])
+                    ->name('school.update');
+            });
 
             // Students
             Route::get('/students', [StudentController::class, 'index'])

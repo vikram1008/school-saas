@@ -67,6 +67,7 @@
   <link rel="canonical" href="{{ config('variables.productPage') ? config('variables.productPage') : '' }}" />
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+  @stack('head')
 
   <!-- Include Styles -->
   <!-- $isFront is used to append the front layout styles only on the front layout otherwise the variable will be blank -->
