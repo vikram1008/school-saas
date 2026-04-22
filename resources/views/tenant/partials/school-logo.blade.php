@@ -5,9 +5,10 @@
 --}}
 
 @php
-    $s = $schoolSettings ?? \App\Models\SchoolSettings::current();
-    $sizes = ['xs'=>24,'sm'=>36,'md'=>48,'lg'=>64,'xl'=>90,'full'=>200];
-    $px = $sizes[$size ?? 'md'] ?? 48;
+    // $schoolSettings is the Tenant model, injected by AppServiceProvider View::composer.
+    $s    = $schoolSettings ?? tenant();
+    $sizes = ['xs' => 24, 'sm' => 36, 'md' => 48, 'lg' => 64, 'xl' => 90, 'full' => 200];
+    $px   = $sizes[$size ?? 'md'] ?? 48;
     $show = $showName ?? false;
     $dark = $darkMode ?? false;
 @endphp

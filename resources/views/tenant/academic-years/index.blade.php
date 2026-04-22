@@ -256,7 +256,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         flatpickr('#ay_start_date', {
-            dateFormat:  'Y-m-dd',
+            dateFormat:  'Y-m-d',
             altInput:    true,
             altFormat:   'd M Y',
             allowInput:  false,

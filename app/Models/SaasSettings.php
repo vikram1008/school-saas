@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class SaasSettings extends Model
 {
     protected $connection = 'mysql'; // ← Always central DB
-    protected $table      = 'saas_settings';
+
+    protected $table = 'saas_settings';
 
     protected $fillable = [
         'key',
@@ -20,24 +22,41 @@ class SaasSettings extends Model
     ];
 
     /**
+     * In-memory store for the current request.
+     *
+     * WHY not Cache::remember()?
+     *   stancl/tenancy wraps the default cache store with tags to isolate
+     *   per-tenant data. Drivers like `file` and `database` don't support
+     *   tagging, so Cache::remember() inside a tenant context throws:
+     *   "This cache store does not support tagging."
+     *
+     *   saas_settings is central (not tenant-specific), so we bypass the
+     *   Cache facade entirely and use a static property instead.
+     *   This gives us request-level memoization with zero driver dependency.
+     *   On high-traffic setups, swap to a tag-aware driver (Redis) and
+     *   re-enable Cache::store('redis')->remember(...) if needed.
+     */
+    private static ?Collection $memo = null;
+
+    /**
      * Get a setting value by key with optional default.
-     * Cached for 1 hour to avoid repeated DB hits.
+     * Memoized per-request (static property) — no cache driver required.
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-         // Force central DB connection — saas_settings is never tenant-specific
-        $settings = \Illuminate\Support\Facades\DB::connection('mysql')
-            ->table('saas_settings')
-            ->get()
-            ->keyBy('key');
+        // Load all settings once per request and keep in static property.
+        if (static::$memo === null) {
+            static::$memo = DB::connection('mysql')
+                ->table('saas_settings')
+                ->get()
+                ->keyBy('key');
+        }
 
-        $settings = collect($settings);
-
-        if (!$settings->has($key)) {
+        if (! static::$memo->has($key)) {
             return $default;
         }
 
-        $setting = (object) $settings->get($key);
+        $setting = (object) static::$memo->get($key);
 
         return match ($setting->type) {
             'integer' => (int) $setting->value,
@@ -47,7 +66,7 @@ class SaasSettings extends Model
     }
 
     /**
-     * Set a setting value by key and bust cache.
+     * Set a setting value by key and invalidate the in-request memo.
      */
     public static function set(string $key, mixed $value): void
     {
@@ -56,7 +75,16 @@ class SaasSettings extends Model
             ['value' => (string) $value]
         );
 
-        Cache::forget('saas_settings'); // ← simple forget, no tags
+        // Bust the in-request memo so subsequent get() calls see fresh data.
+        static::$memo = null;
+    }
+
+    /**
+     * Manually flush the in-request memo (e.g. after bulk updates).
+     */
+    public static function flushMemo(): void
+    {
+        static::$memo = null;
     }
 
     /**

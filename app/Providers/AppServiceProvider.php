@@ -2,10 +2,9 @@
 
 namespace App\Providers;
 
-use App\Models\SchoolSettings;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // ── Vite style tag attributes (Vuexy requirement) ─────────────
+        // ── Vite style tag attributes (Vuexy requirement) ─────────────────
         Vite::useStyleTagAttributes(function (?string $src, string $url, ?array $chunk, ?array $manifest) {
             if ($src !== null) {
                 return [
@@ -24,22 +23,23 @@ class AppServiceProvider extends ServiceProvider
                         ? 'template-customizer-core-css'
                         : (preg_match("/(resources\/assets\/vendor\/scss\/(rtl\/)?theme)-?.*/i", $src)
                             ? 'template-customizer-theme-css'
-                            : '')
+                            : ''),
                 ];
             }
+
             return [];
         });
 
-        // ── Share $schoolSettings with all tenant views ───────────────
+        // ── Share $schoolSettings with all tenant views ───────────────────
         //
-        // Why both guards are needed:
-        //   View::composer fires for every view whose name matches the
-        //   pattern — including when super admin pages @include a
-        //   tenant.* partial. The guards ensure we never touch the
-        //   tenant DB unless a tenant is actually active.
+        // After consolidation, $schoolSettings IS the Tenant model — it now
+        // carries all school identity/branding fields directly.
         //
-        // $schoolSettings will be null on super admin / central pages.
-        // All tenant views must use null-safe: $schoolSettings?->school_name
+        // Views can use: $schoolSettings->school_name, ->logo_url, ->favicon_url,
+        //                ->full_address, ->primary_color, ->principal_name, …
+        //
+        // On super-admin / central pages $schoolSettings is null.
+        // Use null-safe: $schoolSettings?->school_name
         //
         View::composer(
             ['layouts.tenant', 'tenant.*'],
@@ -47,23 +47,19 @@ class AppServiceProvider extends ServiceProvider
                 // Guard 1: tenancy package must be bound in the container
                 if (! app()->bound('tenancy')) {
                     $view->with('schoolSettings', null);
+
                     return;
                 }
 
                 // Guard 2: a tenant must be currently active
                 if (! tenancy()->initialized()) {
                     $view->with('schoolSettings', null);
+
                     return;
                 }
 
-                // Safe to query the tenant DB
-                try {
-                    $view->with('schoolSettings', SchoolSettings::current());
-                } catch (\Throwable $e) {
-                    // Tenant DB exists but school_settings table not yet
-                    // migrated (e.g. during fresh provisioning). Fail silently.
-                    $view->with('schoolSettings', null);
-                }
+                // tenant() returns the Tenant Eloquent model — single source of truth.
+                $view->with('schoolSettings', tenant());
             }
         );
     }

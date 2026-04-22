@@ -4,7 +4,7 @@
   Use at the top of fee receipts, report cards, TC, etc.
 --}}
 
-@php $s = $schoolSettings ?? \App\Models\SchoolSettings::current(); @endphp
+@php $s = $schoolSettings ?? tenant(); @endphp
 
 <div class="school-doc-header d-flex align-items-center gap-3 border-bottom pb-3 mb-3">
     {{-- Logo --}}

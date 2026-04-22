@@ -1,7 +1,8 @@
 @php
   $customizerHidden = 'customizer-hide';
   $configData = Helper::appClasses();
-  $loginSettings = \App\Models\SchoolSettings::current();
+  // $schoolSettings is the Tenant model, injected by AppServiceProvider — safe and no extra DB query.
+  $loginSettings = $schoolSettings ?? tenant();
 @endphp
 
 @extends('layouts/blankLayout')

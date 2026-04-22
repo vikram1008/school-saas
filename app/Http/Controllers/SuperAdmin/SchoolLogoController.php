@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SchoolSettings;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Stancl\Tenancy\Facades\Tenancy;
 
 class SchoolLogoController extends Controller
 {
@@ -16,12 +14,15 @@ class SchoolLogoController extends Controller
      */
     public function index()
     {
-        $tenants = Tenant::with('domains')->orderBy('id')->get();
+        $tenants = Tenant::with('domains')->orderBy('school_name')->get();
+
         return view('superadmin.schools.logos', compact('tenants'));
     }
 
     /**
-     * Upload / remove logo for a specific tenant from super admin panel.
+     * Upload / replace logo for a school.
+     * Since the logo field now lives on the central Tenant model,
+     * no tenant DB context is needed — just a direct Tenant update.
      */
     public function updateLogo(Request $request, Tenant $tenant)
     {
@@ -29,38 +30,27 @@ class SchoolLogoController extends Controller
             'logo' => ['required', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
         ]);
 
-        // Run inside tenant context
-        tenancy()->initialize($tenant);
-
-        $settings = SchoolSettings::current();
-
-        if ($settings->logo) {
-            Storage::disk('public')->delete($settings->logo);
+        if ($tenant->logo) {
+            Storage::disk('public')->delete($tenant->logo);
         }
 
         $path = $request->file('logo')->store('school/logo', 'public');
-        $settings->update(['logo' => $path]);
-        // SchoolSettings::clearCache();
-
-        tenancy()->end();
+        $tenant->update(['logo' => $path]);
 
         return redirect()
             ->back()
-            ->with('success', "Logo updated for {$tenant->id}.");
+            ->with('success', "Logo updated for {$tenant->school_name}.");
     }
 
+    /**
+     * Remove the logo for a school.
+     */
     public function removeLogo(Tenant $tenant)
     {
-        tenancy()->initialize($tenant);
-
-        $settings = SchoolSettings::current();
-        if ($settings->logo) {
-            Storage::disk('public')->delete($settings->logo);
-            $settings->update(['logo' => null]);
-            SchoolSettings::clearCache();
+        if ($tenant->logo) {
+            Storage::disk('public')->delete($tenant->logo);
+            $tenant->update(['logo' => null]);
         }
-
-        tenancy()->end();
 
         return redirect()->back()->with('success', 'Logo removed.');
     }

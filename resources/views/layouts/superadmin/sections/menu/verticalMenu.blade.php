@@ -23,57 +23,74 @@ $configData = Helper::appClasses();
   @endif
 
   <div class="menu-inner-shadow"></div>
-<ul class="menu-inner py-1">
-  <li class="menu-item {{ request()->is('superadmin/dashboard*') ? 'active' : '' }}">
-    <a href="{{ url('/superadmin/dashboard') }}" class="menu-link">
-      <i class="menu-icon icon-base ti tabler-smart-home"></i>
-      <div data-i18n="Dashboard">Dashboard</div>
-    </a>
-  </li>
 
-  <li class="menu-header small text-uppercase">
-    <span class="menu-header-text">Tenant Management</span>
-  </li>
+  <ul class="menu-inner py-1">
 
-  <li class="menu-item {{ request()->is('superadmin/schools*') ? 'active open' : '' }}">
-    <a href="javascript:void(0);" class="menu-link menu-toggle">
-      <i class="menu-icon icon-base ti tabler-school"></i>
-      <div data-i18n="Schools">Schools (Tenants)</div>
-    </a>
-    <ul class="menu-sub">
-      <li class="menu-item {{ request()->is('superadmin/schools') ? 'active' : '' }}">
-        <a href="{{ url('/superadmin/schools') }}" class="menu-link">
-          <div data-i18n="All Schools">All Schools</div>
-        </a>
-      </li>
-      <li class="menu-item {{ request()->is('superadmin/schools/create') ? 'active' : '' }}">
-        <a href="{{ url('/superadmin/schools/create') }}" class="menu-link">
-          <div data-i18n="Add New">Register New</div>
-        </a>
-      </li>
-    </ul>
-  </li>
+    {{-- ── MAIN ──────────────────────────────────────────── --}}
+    <li class="menu-header small text-uppercase">
+      <span class="menu-header-text">Main</span>
+    </li>
 
-  <li class="menu-item {{ request()->routeIs('superadmin.subscriptions.*') ? 'active' : '' }}">
-    <a href="{{ route('superadmin.subscriptions.index') }}" class="menu-link">
+    <li class="menu-item {{ request()->is('superadmin/dashboard*') ? 'active' : '' }}">
+      <a href="{{ url('/superadmin/dashboard') }}" class="menu-link">
+        <i class="menu-icon icon-base ti tabler-smart-home"></i>
+        <div data-i18n="Dashboard">Dashboard</div>
+      </a>
+    </li>
+
+    {{-- ── TENANT MANAGEMENT ────────────────────────────── --}}
+    <li class="menu-header small text-uppercase">
+      <span class="menu-header-text">Tenant Management</span>
+    </li>
+
+    <li class="menu-item {{ request()->is('superadmin/schools*') ? 'active open' : '' }}">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base ti tabler-school"></i>
+        <div data-i18n="Schools">Schools (Tenants)</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {{ request()->routeIs('superadmin.schools.index') ? 'active' : '' }}">
+          <a href="{{ route('superadmin.schools.index') }}" class="menu-link">
+            <div data-i18n="All Schools">All Schools</div>
+          </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('superadmin.schools.create') ? 'active' : '' }}">
+          <a href="{{ route('superadmin.schools.create') }}" class="menu-link">
+            <div data-i18n="Register New">Register New</div>
+          </a>
+        </li>
+        <li class="menu-item {{ request()->routeIs('superadmin.schools.logos') ? 'active' : '' }}">
+          <a href="{{ route('superadmin.schools.logos') }}" class="menu-link">
+            <div data-i18n="School Logos">School Logos</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+    {{-- ── BILLING & SUBSCRIPTIONS ──────────────────────── --}}
+    <li class="menu-header small text-uppercase">
+      <span class="menu-header-text">Billing</span>
+    </li>
+
+    <li class="menu-item {{ request()->routeIs('superadmin.subscriptions.*') ? 'active' : '' }}">
+      <a href="{{ route('superadmin.subscriptions.index') }}" class="menu-link">
         <i class="menu-icon icon-base ti tabler-receipt"></i>
-        <div>Subscriptions</div>
-    </a>
-  </li>
+        <div data-i18n="Subscriptions">Subscriptions</div>
+      </a>
+    </li>
 
-  <li class="menu-item">
-    <a href="#" class="menu-link">
-      <i class="menu-icon icon-base ti tabler-settings"></i>
-      <div data-i18n="Settings">Global Settings</div>
-    </a>
-  </li>
+    {{-- ── CONFIGURATION ────────────────────────────────── --}}
+    <li class="menu-header small text-uppercase">
+      <span class="menu-header-text">Configuration</span>
+    </li>
 
-  <li class="menu-item {{ request()->routeIs('superadmin.schools.logos') ? 'active' : '' }}">
-    <a href="{{ route('superadmin.schools.logos') }}" class="menu-link">
-        <i class="menu-icon icon-base ti tabler-photo-up"></i>
-        <div>School Logos</div>
-    </a>
-  </li>
-</ul>
+    <li class="menu-item {{ request()->routeIs('superadmin.settings.*') ? 'active' : '' }}">
+      <a href="{{ route('superadmin.settings.index') }}" class="menu-link">
+        <i class="menu-icon icon-base ti tabler-settings"></i>
+        <div data-i18n="Settings">Global Settings</div>
+      </a>
+    </li>
+
+  </ul>
 
 </aside>
