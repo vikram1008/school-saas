@@ -1,34 +1,38 @@
 <?php
 
 use App\Http\Controllers\Tenant\AcademicYearController;
+use App\Http\Controllers\Tenant\AttendanceReportController;
 use App\Http\Controllers\Tenant\AuthController;
 use App\Http\Controllers\Tenant\ClassController;
 use App\Http\Controllers\Tenant\DashboardController;
+use App\Http\Controllers\Tenant\ExamController;
+use App\Http\Controllers\Tenant\FeeCollectionController;
 use App\Http\Controllers\Tenant\FeeHeadController;
 use App\Http\Controllers\Tenant\FeeStructureController;
-use App\Http\Controllers\Tenant\FeeCollectionController;
+use App\Http\Controllers\Tenant\GradeScaleController;
+use App\Http\Controllers\Tenant\MarksController;
 use App\Http\Controllers\Tenant\NoticeController;
 use App\Http\Controllers\Tenant\ParentController;
 use App\Http\Controllers\Tenant\ParentPortalController;
+use App\Http\Controllers\Tenant\ReportCardController;
 use App\Http\Controllers\Tenant\SchoolHomeController;
 use App\Http\Controllers\Tenant\SchoolSettingsController;
+use App\Http\Controllers\Tenant\StaffAttendanceController;
 use App\Http\Controllers\Tenant\StaffController;
+use App\Http\Controllers\Tenant\StudentAttendanceController;
 use App\Http\Controllers\Tenant\StudentController;
 use App\Http\Controllers\Tenant\SubjectController;
 use App\Http\Controllers\Tenant\TimetableController;
 use App\Http\Middleware\CheckSubscriptionStatus;
 use App\Http\Middleware\TenantAdminOnly;
 use App\Http\Middleware\TenantAssetUrl;
+use App\Models\ClassSubject;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-use App\Http\Controllers\Tenant\StudentAttendanceController;
-use App\Http\Controllers\Tenant\StaffAttendanceController;
-use App\Http\Controllers\Tenant\AttendanceReportController;
-use App\Http\Controllers\Tenant\ExamController;
-use App\Http\Controllers\Tenant\MarksController;
-use App\Http\Controllers\Tenant\ReportCardController;
-use App\Http\Controllers\Tenant\GradeScaleController;
 
 Route::middleware([
     'web',
@@ -37,7 +41,7 @@ Route::middleware([
     TenantAssetUrl::class,
     CheckSubscriptionStatus::class,
 ])->group(function () {
-    
+
     /*
     |-----------------------------------------------------------
     | PUBLIC — School website (no auth required)
@@ -45,7 +49,7 @@ Route::middleware([
     */
     Route::get('/', [SchoolHomeController::class, 'index'])
         ->name('tenant.home');
- 
+
     Route::post('/contact', [SchoolHomeController::class, 'contact'])
         ->name('tenant.home.contact');
 
@@ -59,18 +63,27 @@ Route::middleware([
 
     // Authenticated tenant routes
     Route::middleware(['auth:tenant'])->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])
-            ->name('tenant.dashboard');
+        // Dashboard — redirect parents to their own portal
+        Route::get('/dashboard', function () {
+            $user = Auth::guard('tenant')->user();
+            if ($user && $user->isParent()) {
+                return redirect()->route('tenant.parent-portal.dashboard');
+            }
 
-        // Notices (admin)
-        Route::get('/notices', [NoticeController::class, 'index'])
-            ->name('tenant.notices.index');
-        Route::post('/notices', [NoticeController::class, 'store'])
-            ->name('tenant.notices.store');
-        Route::put('/notices/{notice}', [NoticeController::class, 'update'])
-            ->name('tenant.notices.update');
-        Route::delete('/notices/{notice}', [NoticeController::class, 'destroy'])
-            ->name('tenant.notices.destroy');
+            return app(DashboardController::class)->index();
+        })->name('tenant.dashboard');
+
+        // Notices — staff/admin only (not parents)
+        Route::middleware('not.parent')->group(function () {
+            Route::get('/notices', [NoticeController::class, 'index'])
+                ->name('tenant.notices.index');
+            Route::post('/notices', [NoticeController::class, 'store'])
+                ->name('tenant.notices.store');
+            Route::put('/notices/{notice}', [NoticeController::class, 'update'])
+                ->name('tenant.notices.update');
+            Route::delete('/notices/{notice}', [NoticeController::class, 'destroy'])
+                ->name('tenant.notices.destroy');
+        });
 
         // Admin only
         Route::middleware(TenantAdminOnly::class)->group(function () {
@@ -110,7 +123,7 @@ Route::middleware([
             // Ajax: get subjects for a class (used by exam, timetable, marks)
             Route::get('/classes/{classId}/subjects', function ($classId) {
                 return response()->json(
-                    \App\Models\ClassSubject::where('class_id', $classId)
+                    ClassSubject::where('class_id', $classId)
                         ->where('is_active', true)
                         ->orderBy('sort_order')
                         ->get(['id', 'subject_name', 'subject_name_hi', 'teacher_id'])
@@ -220,7 +233,6 @@ Route::middleware([
                 Route::get('/students/search', [FeeCollectionController::class, 'searchStudents'])
                     ->name('students.search');
             });
-
 
             // Attendance
             Route::prefix('attendance')->name('tenant.attendance.')->group(function () {
@@ -356,28 +368,30 @@ Route::middleware([
 
 });
 
-
-Route::get('/translate', function (\Illuminate\Http\Request $request) {
+Route::get('/translate', function (Request $request) {
     $text = $request->q;
-    $to   = $request->to ?? 'hi';
+    $to = $request->to ?? 'hi';
 
-    if (!$text) return response()->json(['text' => '']);
+    if (! $text) {
+        return response()->json(['text' => '']);
+    }
 
     try {
-        $response = \Illuminate\Support\Facades\Http::get(
+        $response = Http::get(
             'https://translate.googleapis.com/translate_a/single', [
                 'client' => 'gtx',
-                'sl'     => 'en',
-                'tl'     => $to,
-                'dt'     => 't',
-                'q'      => $text,
+                'sl' => 'en',
+                'tl' => $to,
+                'dt' => 't',
+                'q' => $text,
             ]
         );
 
         $translated = $response->json()[0][0][0] ?? '';
+
         return response()->json(['text' => $translated]);
 
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         return response()->json(['text' => '']);
     }
 })->name('tenant.translate')->middleware([
