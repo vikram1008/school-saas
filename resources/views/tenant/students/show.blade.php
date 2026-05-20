@@ -1,5 +1,6 @@
 @php
     use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Facades\Auth;
 @endphp
 @extends('layouts.tenant')
 
@@ -34,6 +35,13 @@
         <div class="alert alert-success alert-dismissible mb-4">
             <i class="icon-base ti tabler-circle-check me-1"></i>
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible mb-4">
+            <i class="icon-base ti tabler-alert-circle me-1"></i>
+            {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
@@ -205,6 +213,15 @@
                             <i class="icon-base ti tabler-refresh me-1"></i>
                             Change Status
                         </button>
+                        @if(Auth::guard('tenant')->user()->isSchoolAdmin())
+                        <button type="button"
+                                class="btn btn-outline-info"
+                                data-bs-toggle="modal"
+                                data-bs-target="#resetPasswordModal">
+                            <i class="icon-base ti tabler-key me-1"></i>
+                            Reset Password
+                        </button>
+                        @endif
                         <button type="button"
                                 class="btn btn-outline-danger suspend-user">
                             <i class="icon-base ti tabler-user-off me-1"></i>
@@ -874,6 +891,47 @@
                     <button type="button" class="btn btn-outline-secondary"
                             data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Reset Password Modal --}}
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <form action="{{ route('tenant.students.reset-password', $student) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resetPasswordModalLabel">
+                        <i class="icon-base ti tabler-key me-1 text-info"></i>
+                        Reset Password
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small mb-3">
+                        <i class="icon-base ti tabler-info-circle me-1"></i>
+                        Leave blank to reset to the <strong>admission number</strong>
+                        <code class="ms-1">{{ $student->admission_number }}</code>.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">New Password <span class="text-muted fw-normal">(optional)</span></label>
+                        <input type="text" name="password" id="studentResetPassword"
+                               class="form-control"
+                               placeholder="Leave blank = admission number"
+                               minlength="6">
+                        <div class="form-text">Min 6 characters if setting custom password.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="icon-base ti tabler-key me-1"></i>
+                        Reset Password
+                    </button>
                 </div>
             </form>
         </div>

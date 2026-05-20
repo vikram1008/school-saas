@@ -4,37 +4,52 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
+use App\Models\TenantUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NoticeController extends Controller
 {
+    private function tenantUser(): TenantUser
+    {
+        return Auth::guard('tenant')->user();
+    }
+
     public function index()
     {
+        $user = $this->tenantUser();
+        if ($user->isStaff() && ! $user->hasPermission('can_view_notices') && ! $user->hasPermission('can_post_notices')) {
+            abort(403, "You don't have permission to view notices.");
+        }
+
         $notices = Notice::with('publishedBy')
             ->latest()
             ->paginate(15);
 
-        return view('tenant.notices.index', compact('notices'));
+        $canPost = $user->hasPermission('can_post_notices');
+
+        return view('tenant.notices.index', compact('notices', 'canPost'));
     }
 
     public function store(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_post_notices');
+
         $request->validate([
-            'title'      => ['required', 'string', 'max:255'],
-            'content'    => ['required', 'string'],
+            'title' => ['required', 'string', 'max:255'],
+            'content' => ['required', 'string'],
             'visible_to' => ['required', 'in:all,parents,staff,students'],
         ]);
 
         Notice::create([
-            'title'        => $request->title,
-            'title_hi'     => $request->title_hi,
-            'content'      => $request->content,
-            'content_hi'   => $request->content_hi,
-            'visible_to'   => $request->visible_to,
+            'title' => $request->title,
+            'title_hi' => $request->title_hi,
+            'content' => $request->content,
+            'content_hi' => $request->content_hi,
+            'visible_to' => $request->visible_to,
             'published_by' => Auth::guard('tenant')->id(),
             'published_at' => $request->boolean('is_published') ? now() : null,
-            'expires_at'   => $request->expires_at,
+            'expires_at' => $request->expires_at,
             'is_published' => $request->boolean('is_published'),
         ]);
 
@@ -45,21 +60,23 @@ class NoticeController extends Controller
 
     public function update(Request $request, Notice $notice)
     {
+        $this->tenantUser()->authorizePermission('can_post_notices');
+
         $request->validate([
-            'title'      => ['required', 'string', 'max:255'],
-            'content'    => ['required', 'string'],
+            'title' => ['required', 'string', 'max:255'],
+            'content' => ['required', 'string'],
             'visible_to' => ['required', 'in:all,parents,staff,students'],
         ]);
 
         $notice->update([
-            'title'        => $request->title,
-            'title_hi'     => $request->title_hi,
-            'content'      => $request->content,
-            'content_hi'   => $request->content_hi,
-            'visible_to'   => $request->visible_to,
-            'expires_at'   => $request->expires_at,
+            'title' => $request->title,
+            'title_hi' => $request->title_hi,
+            'content' => $request->content,
+            'content_hi' => $request->content_hi,
+            'visible_to' => $request->visible_to,
+            'expires_at' => $request->expires_at,
             'is_published' => $request->boolean('is_published'),
-            'published_at' => $request->boolean('is_published') && !$notice->published_at
+            'published_at' => $request->boolean('is_published') && ! $notice->published_at
                 ? now() : $notice->published_at,
         ]);
 
@@ -70,7 +87,10 @@ class NoticeController extends Controller
 
     public function destroy(Notice $notice)
     {
+        $this->tenantUser()->authorizePermission('can_post_notices');
+
         $notice->delete();
+
         return redirect()
             ->route('tenant.notices.index')
             ->with('success', 'Notice deleted.');

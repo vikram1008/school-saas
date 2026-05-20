@@ -24,6 +24,13 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible mb-4">
+            <i class="icon-base ti tabler-alert-circle me-1"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     <div class="row g-4">
 
@@ -178,24 +185,40 @@
 </div>
 
 {{-- Reset Password Modal --}}
-<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="parentResetPasswordLabel">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <form action="{{ route('tenant.parents.reset-password', $parent) }}" method="POST">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Reset Password</h5>
+                    <h5 class="modal-title" id="parentResetPasswordLabel">
+                        <i class="icon-base ti tabler-key me-1 text-info"></i>
+                        Reset Password
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <label class="form-label fw-semibold">New Password</label>
-                    <input type="text" name="password" class="form-control"
-                           placeholder="Min 6 characters" required minlength="6">
+                    <div class="alert alert-info small mb-3">
+                        <i class="icon-base ti tabler-info-circle me-1"></i>
+                        Leave blank to reset to the <strong>mobile number</strong>
+                        <code class="ms-1">{{ $parent->mobile ?? $parent->phone ?? 'parent123' }}</code>.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">New Password <span class="text-muted fw-normal">(optional)</span></label>
+                        <input type="text" name="password" id="parentResetPassword"
+                               class="form-control"
+                               placeholder="Leave blank = mobile number"
+                               minlength="6">
+                        <div class="form-text">Min 6 characters if setting custom password.</div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary"
                             data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Reset</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="icon-base ti tabler-key me-1"></i>
+                        Reset Password
+                    </button>
                 </div>
             </form>
         </div>

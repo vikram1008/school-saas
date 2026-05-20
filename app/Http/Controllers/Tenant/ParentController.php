@@ -6,16 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Models\ParentProfile;
 use App\Models\ParentStudentLink;
 use App\Models\StudentProfile;
+use App\Models\TenantUser;
 use App\Services\ParentService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class ParentController extends Controller
 {
     public function __construct(protected ParentService $parentService) {}
 
+    private function tenantUser(): TenantUser
+    {
+        return Auth::guard('tenant')->user();
+    }
+
+    private function requireAdmin(): void
+    {
+        if (! $this->tenantUser()->isSchoolAdmin()) {
+            abort(403, 'Only school admins can perform this action.');
+        }
+    }
+
     public function index(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_view_parents');
+
         $query = ParentProfile::with(['user', 'students'])
             ->orderBy('first_name');
 
@@ -23,9 +38,9 @@ class ParentController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('mobile', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('mobile', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -40,24 +55,32 @@ class ParentController extends Controller
 
     public function show(ParentProfile $parent)
     {
+        $this->tenantUser()->authorizePermission('can_view_parents');
+
         $parent->load(['user', 'students.class', 'students.section']);
+
         return view('tenant.parents.show', compact('parent'));
     }
 
     public function edit(ParentProfile $parent)
     {
+        $this->requireAdmin();
+
         $parent->load(['user', 'students']);
         $allStudents = StudentProfile::where('status', 'active')
             ->orderBy('first_name')->get();
+
         return view('tenant.parents.edit', compact('parent', 'allStudents'));
     }
 
     public function update(Request $request, ParentProfile $parent)
     {
+        $this->requireAdmin();
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'mobile'     => ['required', 'string', 'max:15'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'mobile' => ['required', 'string', 'max:15'],
         ]);
 
         $parent->update($request->only([
@@ -71,8 +94,8 @@ class ParentController extends Controller
 
         // Update user name
         $parent->user?->update([
-            'name'     => $request->first_name . ' ' . $request->last_name,
-            'is_active'=> $request->boolean('is_active'),
+            'name' => $request->first_name.' '.$request->last_name,
+            'is_active' => $request->boolean('is_active'),
         ]);
 
         return redirect()
@@ -82,22 +105,37 @@ class ParentController extends Controller
 
     public function resetPassword(Request $request, ParentProfile $parent)
     {
+        $this->requireAdmin();
+
         $request->validate([
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['nullable', 'string', 'min:6'],
         ]);
 
-        $this->parentService->resetPassword($parent, $request->password);
+        if (! $parent->user) {
+            return redirect()
+                ->route('tenant.parents.show', $parent)
+                ->with('error', 'No login account found for this parent.');
+        }
+
+        // Default to mobile number when no custom password is supplied
+        $newPassword = $request->filled('password')
+            ? $request->password
+            : ($parent->mobile ?? $parent->phone ?? 'parent123');
+
+        $this->parentService->resetPassword($parent, $newPassword);
 
         return redirect()
             ->route('tenant.parents.show', $parent)
-            ->with('success', 'Password reset successfully.');
+            ->with('success', 'Password reset to "'.$newPassword.'" successfully.');
     }
 
     public function linkStudent(Request $request, ParentProfile $parent)
     {
+        $this->requireAdmin();
+
         $request->validate([
             'student_profile_id' => ['required', 'exists:student_profiles,id'],
-            'relationship'       => ['required', 'in:father,mother,guardian,other'],
+            'relationship' => ['required', 'in:father,mother,guardian,other'],
         ]);
 
         $this->parentService->linkStudentToParent(
@@ -113,6 +151,8 @@ class ParentController extends Controller
 
     public function unlinkStudent(ParentProfile $parent, StudentProfile $student)
     {
+        $this->requireAdmin();
+
         ParentStudentLink::where('parent_profile_id', $parent->id)
             ->where('student_profile_id', $student->id)
             ->delete();

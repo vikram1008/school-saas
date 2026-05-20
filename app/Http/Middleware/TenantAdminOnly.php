@@ -12,10 +12,21 @@ class TenantAdminOnly
     {
         $user = Auth::guard('tenant')->user();
 
-        if (!$user || !$user->isSchoolAdmin()) {
-            abort(403, 'Only School Administrators can access this area.');
+        if (! $user) {
+            abort(403, 'Unauthorized.');
         }
 
-        return $next($request);
+        // School admins have full access
+        if ($user->isSchoolAdmin()) {
+            return $next($request);
+        }
+
+        // Staff members (teacher, accountant, librarian) are allowed through;
+        // per-route permission checks are enforced separately.
+        if ($user->isStaff()) {
+            return $next($request);
+        }
+
+        abort(403, 'Only School Administrators and authorised staff can access this area.');
     }
 }

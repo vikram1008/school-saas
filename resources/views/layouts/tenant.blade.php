@@ -148,6 +148,40 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
               </a>
             </li>
 
+            {{-- ── LIBRARY ── --}}
+            <li class="menu-item {{ request()->routeIs('tenant.library.*') ? 'active open' : '' }}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-books"></i>
+                <div>Library / पुस्तकालय</div>
+              </a>
+              <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('tenant.library.dashboard') ? 'active' : '' }}">
+                  <a href="{{ route('tenant.library.dashboard') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-layout-dashboard"></i>
+                    <div>Dashboard</div>
+                  </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('tenant.library.books') ? 'active' : '' }}">
+                  <a href="{{ route('tenant.library.books') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-book-2"></i>
+                    <div>Book Catalogue</div>
+                  </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('tenant.library.members') ? 'active' : '' }}">
+                  <a href="{{ route('tenant.library.members') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-id-badge-2"></i>
+                    <div>Members</div>
+                  </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('tenant.library.issues') ? 'active' : '' }}">
+                  <a href="{{ route('tenant.library.issues') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-book-upload"></i>
+                    <div>Issue & Return</div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
             {{-- ── 4. ATTENDANCE REPORTS ── --}}
             <li class="menu-item {{ request()->routeIs('tenant.attendance.reports.*') ? 'active' : '' }}">
               <a href="{{ route('tenant.attendance.reports.daily') }}" class="menu-link">
@@ -241,6 +275,17 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
             </li>
 
             {{-- ── 8. SETTINGS (rarely visited, always last) ── --}}
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Administration</span>
+            </li>
+
+            <li class="menu-item {{ request()->routeIs('tenant.staff.permissions.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.staff.permissions.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-shield-check"></i>
+                <div>Staff Permissions</div>
+              </a>
+            </li>
+
             <li class="menu-item {{ request()->routeIs('tenant.settings.*') ? 'active' : '' }}">
               <a href="{{ route('tenant.settings.school.edit') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-settings"></i>
@@ -250,6 +295,183 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
 
           @endif
           {{-- /isSchoolAdmin --}}
+
+          {{-- ════════════════════════════════ --}}
+          {{--   STAFF MENU (teacher/accountant/librarian) --}}
+          {{-- ════════════════════════════════ --}}
+          @if(Auth::guard('tenant')->user()?->isStaff())
+            @php $staffUser = Auth::guard('tenant')->user(); $sp = $staffUser->resolvedPermissions(); @endphp
+
+            {{-- ── DAILY OPERATIONS ── --}}
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Daily Operations</span>
+            </li>
+
+            @if($sp->can_mark_student_attendance)
+            <li class="menu-item {{ request()->routeIs('tenant.attendance.students.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.students.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-user-check"></i>
+                <div>Student Attendance</div>
+              </a>
+            </li>
+            @endif
+
+            @if($sp->can_mark_staff_attendance)
+            <li class="menu-item {{ request()->routeIs('tenant.attendance.staff.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.staff.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-id-badge"></i>
+                <div>Staff Attendance</div>
+              </a>
+            </li>
+            @endif
+
+            @if($sp->can_enter_marks)
+            <li class="menu-item {{ request()->routeIs('tenant.results.marks.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.marks.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-pencil"></i>
+                <div>Enter Marks</div>
+              </a>
+            </li>
+            @endif
+
+            @if($sp->can_collect_fees)
+            <li class="menu-item {{ request()->routeIs('tenant.fees.collections.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.collections.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-cash"></i>
+                <div>Fee Collection</div>
+              </a>
+            </li>
+            @endif
+
+            @if($sp->can_view_notices || $sp->can_post_notices)
+            <li class="menu-item {{ request()->routeIs('tenant.notices.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.notices.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-speakerphone"></i>
+                <div>Notices</div>
+              </a>
+            </li>
+            @endif
+
+            {{-- ── ACADEMICS ── --}}
+            @if($sp->can_view_exams || $sp->can_view_report_cards || $sp->can_view_timetable || $sp->can_view_attendance_reports)
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Academics</span>
+            </li>
+            @endif
+
+            @if($sp->can_view_timetable)
+            <li class="menu-item {{ request()->routeIs('tenant.timetable.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.timetable.teacher') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-calendar-time"></i>
+                <div>My Timetable</div>
+              </a>
+            </li>
+            @endif
+
+            @if($sp->can_view_exams)
+            <li class="menu-item {{ request()->routeIs('tenant.results.exams.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.exams.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-clipboard-list"></i>
+                <div>Exams</div>
+              </a>
+            </li>
+            @endif
+
+            @if($sp->can_view_report_cards)
+            <li class="menu-item {{ request()->routeIs('tenant.results.report-cards.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.results.report-cards.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-certificate"></i>
+                <div>Report Cards</div>
+              </a>
+            </li>
+            @endif
+
+            @if($sp->can_view_attendance_reports)
+            <li class="menu-item {{ request()->routeIs('tenant.attendance.reports.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.attendance.reports.daily') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-chart-bar"></i>
+                <div>Attendance Reports</div>
+              </a>
+            </li>
+            @endif
+
+            {{-- ── FINANCE ── --}}
+            @if($sp->can_view_fee_reports)
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Finance</span>
+            </li>
+            <li class="menu-item {{ request()->routeIs('tenant.fees.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.fees.collections.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-report-money"></i>
+                <div>Fee Reports</div>
+              </a>
+            </li>
+            @endif
+
+            {{-- ── PEOPLE ── --}}
+            @if($sp->can_view_students || $sp->can_view_staff || $sp->can_view_parents)
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">People</span>
+            </li>
+            @if($sp->can_view_students)
+            <li class="menu-item {{ request()->routeIs('tenant.students.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.students.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-users"></i>
+                <div>Students</div>
+              </a>
+            </li>
+            @endif
+            @if($sp->can_view_staff)
+            <li class="menu-item {{ request()->routeIs('tenant.staff.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.staff.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-chalkboard"></i>
+                <div>Staff</div>
+              </a>
+            </li>
+            @endif
+            @if($sp->can_view_parents)
+            <li class="menu-item {{ request()->routeIs('tenant.parents.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.parents.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-users-group"></i>
+                <div>Parents</div>
+              </a>
+            </li>
+            @endif
+            @endif
+
+            {{-- ── LIBRARY (librarian + anyone with permission) ── --}}
+            @if($sp->can_manage_library)
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Library / पुस्तकालय</span>
+            </li>
+            <li class="menu-item {{ request()->routeIs('tenant.library.dashboard') ? 'active' : '' }}">
+              <a href="{{ route('tenant.library.dashboard') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-layout-dashboard"></i>
+                <div>Library Dashboard</div>
+              </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('tenant.library.books') ? 'active' : '' }}">
+              <a href="{{ route('tenant.library.books') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-books"></i>
+                <div>Book Catalogue</div>
+              </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('tenant.library.members') ? 'active' : '' }}">
+              <a href="{{ route('tenant.library.members') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-id-badge-2"></i>
+                <div>Members</div>
+              </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('tenant.library.issues') ? 'active' : '' }}">
+              <a href="{{ route('tenant.library.issues') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-book-upload"></i>
+                <div>Issue & Return</div>
+              </a>
+            </li>
+            @endif
+
+          @endif
+          {{-- /isStaff --}}
 
           {{-- ════════════════════════════════ --}}
           {{--   PARENT PORTAL MENU            --}}

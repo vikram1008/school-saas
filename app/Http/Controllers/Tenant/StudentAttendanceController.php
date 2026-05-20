@@ -9,24 +9,32 @@ use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\StudentAttendance;
 use App\Models\StudentProfile;
+use App\Models\TenantUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StudentAttendanceController extends Controller
 {
+    private function tenantUser(): TenantUser
+    {
+        return Auth::guard('tenant')->user();
+    }
+
     public function index(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_mark_student_attendance');
+
         $activeYear = AcademicYear::active();
-        $classes    = $activeYear
+        $classes = $activeYear
             ? SchoolClass::where('academic_year_id', $activeYear->id)
                 ->orderBy('order')->get()
             : collect();
 
-        $date       = $request->date ?? today()->toDateString();
-        $classId    = $request->class_id;
-        $sectionId  = $request->section_id;
-        $type       = $request->type ?? 'class_wise';
+        $date = $request->date ?? today()->toDateString();
+        $classId = $request->class_id;
+        $sectionId = $request->section_id;
+        $type = $request->type ?? 'class_wise';
 
         $sections = $classId
             ? Section::where('class_id', $classId)->orderBy('order')->get()
@@ -34,7 +42,7 @@ class StudentAttendanceController extends Controller
 
         $periods = ($classId && $type === 'subject_wise')
             ? AttendancePeriod::where('class_id', $classId)
-                ->when($sectionId, fn($q) => $q->where(function($q) use ($sectionId) {
+                ->when($sectionId, fn ($q) => $q->where(function ($q) use ($sectionId) {
                     $q->where('section_id', $sectionId)->orWhereNull('section_id');
                 }))
                 ->where('is_active', true)
@@ -48,7 +56,7 @@ class StudentAttendanceController extends Controller
 
         if ($classId) {
             $students = StudentProfile::where('class_id', $classId)
-                ->when($sectionId, fn($q) => $q->where('section_id', $sectionId))
+                ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
                 ->where('status', 'active')
                 ->orderBy('first_name')
                 ->get();
@@ -57,20 +65,20 @@ class StudentAttendanceController extends Controller
             $existingAttendance = StudentAttendance::where('class_id', $classId)
                 ->whereDate('date', $date)
                 ->where('attendance_type', $type)
-                ->when($periodId, fn($q) => $q->where('period_id', $periodId))
-                ->when(!$periodId && $type === 'class_wise', fn($q) => $q->whereNull('period_id'))
+                ->when($periodId, fn ($q) => $q->where('period_id', $periodId))
+                ->when(! $periodId && $type === 'class_wise', fn ($q) => $q->whereNull('period_id'))
                 ->get()
                 ->keyBy('student_profile_id');
         }
 
         // Daily summary
         $dailySummary = $classId ? [
-            'present'  => $existingAttendance->where('status', 'present')->count(),
-            'absent'   => $existingAttendance->where('status', 'absent')->count(),
-            'late'     => $existingAttendance->where('status', 'late')->count(),
+            'present' => $existingAttendance->where('status', 'present')->count(),
+            'absent' => $existingAttendance->where('status', 'absent')->count(),
+            'late' => $existingAttendance->where('status', 'late')->count(),
             'half_day' => $existingAttendance->where('status', 'half_day')->count(),
-            'leave'    => $existingAttendance->where('status', 'leave')->count(),
-            'total'    => $students->count(),
+            'leave' => $existingAttendance->where('status', 'leave')->count(),
+            'total' => $students->count(),
         ] : null;
 
         return view('tenant.attendance.students.index', compact(
@@ -82,20 +90,22 @@ class StudentAttendanceController extends Controller
 
     public function store(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_mark_student_attendance');
+
         $request->validate([
-            'date'            => ['required', 'date'],
-            'class_id'        => ['required', 'exists:classes,id'],
-            'academic_year_id'=> ['required', 'exists:academic_years,id'],
+            'date' => ['required', 'date'],
+            'class_id' => ['required', 'exists:classes,id'],
+            'academic_year_id' => ['required', 'exists:academic_years,id'],
             'attendance_type' => ['required', 'in:class_wise,subject_wise'],
-            'attendance'      => ['required', 'array'],
+            'attendance' => ['required', 'array'],
         ]);
 
-        $markedBy  = Auth::guard('tenant')->id();
-        $date      = $request->date;
-        $classId   = $request->class_id;
+        $markedBy = Auth::guard('tenant')->id();
+        $date = $request->date;
+        $classId = $request->class_id;
         $sectionId = $request->section_id;
-        $type      = $request->attendance_type;
-        $periodId  = $request->period_id ?? null;
+        $type = $request->attendance_type;
+        $periodId = $request->period_id ?? null;
 
         DB::beginTransaction();
         try {
@@ -103,29 +113,30 @@ class StudentAttendanceController extends Controller
                 StudentAttendance::updateOrCreate(
                     [
                         'student_profile_id' => $studentId,
-                        'date'               => $date,
-                        'attendance_type'    => $type,
-                        'period_id'          => $periodId,
+                        'date' => $date,
+                        'attendance_type' => $type,
+                        'period_id' => $periodId,
                     ],
                     [
-                        'class_id'        => $classId,
-                        'section_id'      => $sectionId,
-                        'academic_year_id'=> $request->academic_year_id,
-                        'status'          => $data['status'] ?? 'present',
-                        'subject_name'    => $data['subject_name'] ?? null,
-                        'remarks'         => $data['remarks'] ?? null,
-                        'marked_by'       => $markedBy,
+                        'class_id' => $classId,
+                        'section_id' => $sectionId,
+                        'academic_year_id' => $request->academic_year_id,
+                        'status' => $data['status'] ?? 'present',
+                        'subject_name' => $data['subject_name'] ?? null,
+                        'remarks' => $data['remarks'] ?? null,
+                        'marked_by' => $markedBy,
                     ]
                 );
             }
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Failed: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Failed: '.$e->getMessage()]);
         }
 
         return redirect()
             ->back()
-            ->with('success', 'Attendance saved for ' . count($request->attendance) . ' students.');
+            ->with('success', 'Attendance saved for '.count($request->attendance).' students.');
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Tenant\FeeCollectionController;
 use App\Http\Controllers\Tenant\FeeHeadController;
 use App\Http\Controllers\Tenant\FeeStructureController;
 use App\Http\Controllers\Tenant\GradeScaleController;
+use App\Http\Controllers\Tenant\LibraryController;
 use App\Http\Controllers\Tenant\MarksController;
 use App\Http\Controllers\Tenant\NoticeController;
 use App\Http\Controllers\Tenant\ParentController;
@@ -19,6 +20,8 @@ use App\Http\Controllers\Tenant\SchoolHomeController;
 use App\Http\Controllers\Tenant\SchoolSettingsController;
 use App\Http\Controllers\Tenant\StaffAttendanceController;
 use App\Http\Controllers\Tenant\StaffController;
+use App\Http\Controllers\Tenant\StaffDashboardController;
+use App\Http\Controllers\Tenant\StaffPermissionsController;
 use App\Http\Controllers\Tenant\StudentAttendanceController;
 use App\Http\Controllers\Tenant\StudentController;
 use App\Http\Controllers\Tenant\SubjectController;
@@ -63,18 +66,33 @@ Route::middleware([
 
     // Authenticated tenant routes
     Route::middleware(['auth:tenant'])->group(function () {
-        // Dashboard — redirect parents to their own portal
+
+        // Dashboard — role-based routing
         Route::get('/dashboard', function () {
             $user = Auth::guard('tenant')->user();
             if ($user && $user->isParent()) {
                 return redirect()->route('tenant.parent-portal.dashboard');
             }
+            if ($user && $user->isStaff()) {
+                return redirect()->route('tenant.staff.dashboard');
+            }
 
             return app(DashboardController::class)->index();
         })->name('tenant.dashboard');
 
-        // Notices — staff/admin only (not parents)
+        // Staff Dashboard
+        Route::get('/staff-dashboard', [StaffDashboardController::class, 'index'])
+            ->name('tenant.staff.dashboard');
+
+        /*
+        |-----------------------------------------------------------
+        | SHARED — Admin + Staff (not parents)
+        | Each controller method enforces its own fine-grained check
+        |-----------------------------------------------------------
+        */
         Route::middleware('not.parent')->group(function () {
+
+            // ── Notices ─────────────────────────────────────────────
             Route::get('/notices', [NoticeController::class, 'index'])
                 ->name('tenant.notices.index');
             Route::post('/notices', [NoticeController::class, 'store'])
@@ -83,10 +101,213 @@ Route::middleware([
                 ->name('tenant.notices.update');
             Route::delete('/notices/{notice}', [NoticeController::class, 'destroy'])
                 ->name('tenant.notices.destroy');
+
+            // ── Student Attendance ───────────────────────────────────
+            Route::get('/attendance/students', [StudentAttendanceController::class, 'index'])
+                ->name('tenant.attendance.students.index');
+            Route::post('/attendance/students', [StudentAttendanceController::class, 'store'])
+                ->name('tenant.attendance.students.store');
+
+            // ── Staff Attendance ─────────────────────────────────────
+            Route::get('/attendance/staff', [StaffAttendanceController::class, 'index'])
+                ->name('tenant.attendance.staff.index');
+            Route::post('/attendance/staff', [StaffAttendanceController::class, 'store'])
+                ->name('tenant.attendance.staff.store');
+
+            // ── Attendance Reports ───────────────────────────────────
+            Route::get('/attendance/reports/daily', [AttendanceReportController::class, 'dailySummary'])
+                ->name('tenant.attendance.reports.daily');
+            Route::get('/attendance/reports/students/monthly', [AttendanceReportController::class, 'studentMonthly'])
+                ->name('tenant.attendance.reports.students.monthly');
+            Route::get('/attendance/reports/staff/monthly', [AttendanceReportController::class, 'staffMonthly'])
+                ->name('tenant.attendance.reports.staff.monthly');
+
+            // ── Students (view = staff, create/edit/delete = admin only, enforced in controller) ──
+            Route::get('/students', [StudentController::class, 'index'])
+                ->name('tenant.students.index');
+            Route::get('/students/create', [StudentController::class, 'create'])
+                ->name('tenant.students.create');
+            Route::post('/students', [StudentController::class, 'store'])
+                ->name('tenant.students.store');
+
+            // ── Student Import / Export (must be before {student} wildcard) ──
+            Route::get('/students/export', [StudentController::class, 'export'])
+                ->name('tenant.students.export');
+            Route::post('/students/import', [StudentController::class, 'import'])
+                ->name('tenant.students.import');
+            Route::get('/students/import/template', [StudentController::class, 'importTemplate'])
+                ->name('tenant.students.import.template');
+            Route::patch('/students/documents/{document}/verify', [StudentController::class, 'verifyDocument'])
+                ->name('tenant.students.documents.verify');
+
+            // ── Student wildcard routes ──────────────────────────────────────
+            Route::get('/students/{student}', [StudentController::class, 'show'])
+                ->name('tenant.students.show');
+            Route::get('/students/{student}/edit', [StudentController::class, 'edit'])
+                ->name('tenant.students.edit');
+            Route::put('/students/{student}', [StudentController::class, 'update'])
+                ->name('tenant.students.update');
+            Route::delete('/students/{student}', [StudentController::class, 'destroy'])
+                ->name('tenant.students.destroy');
+            Route::patch('/students/{student}/status', [StudentController::class, 'updateStatus'])
+                ->name('tenant.students.status');
+            Route::post('/students/{student}/reset-password', [StudentController::class, 'resetPassword'])
+                ->name('tenant.students.reset-password');
+
+            // Ajax: sections for a class
+            Route::get('/classes/{class}/sections', [StudentController::class, 'getSections'])
+                ->name('tenant.classes.get-sections');
+
+            // ── Parents (view = staff, edit/write = admin only, enforced in controller) ──
+            Route::get('/parents', [ParentController::class, 'index'])
+                ->name('tenant.parents.index');
+            Route::get('/parents/{parent}', [ParentController::class, 'show'])
+                ->name('tenant.parents.show');
+            Route::get('/parents/{parent}/edit', [ParentController::class, 'edit'])
+                ->name('tenant.parents.edit');
+            Route::put('/parents/{parent}', [ParentController::class, 'update'])
+                ->name('tenant.parents.update');
+            Route::post('/parents/{parent}/reset-password', [ParentController::class, 'resetPassword'])
+                ->name('tenant.parents.reset-password');
+            Route::post('/parents/{parent}/link-student', [ParentController::class, 'linkStudent'])
+                ->name('tenant.parents.link-student');
+            Route::delete('/parents/{parent}/unlink/{student}', [ParentController::class, 'unlinkStudent'])
+                ->name('tenant.parents.unlink-student');
+
+            // ── Fee Collections (view-reports = staff with can_view_fee_reports, collect = can_collect_fees) ──
+            Route::prefix('fees')->name('tenant.fees.')->group(function () {
+                Route::get('/collections', [FeeCollectionController::class, 'index'])
+                    ->name('collections.index');
+                Route::get('/collections/create', [FeeCollectionController::class, 'create'])
+                    ->name('collections.create');
+                Route::post('/collections', [FeeCollectionController::class, 'store'])
+                    ->name('collections.store');
+                Route::get('/collections/ledger', [FeeCollectionController::class, 'studentLedger'])
+                    ->name('collections.ledger');
+                Route::get('/collections/receipt/{feeCollection}', [FeeCollectionController::class, 'receipt'])
+                    ->name('receipt');
+                Route::post('/collections/generate-demands', [FeeCollectionController::class, 'generateDemands'])
+                    ->name('collections.generate-demands');
+                Route::patch('/collections/demands/{demand}/waive', [FeeCollectionController::class, 'waiveDemand'])
+                    ->name('collections.waive-demand');
+
+                // Ajax
+                Route::get('/students/search', [FeeCollectionController::class, 'searchStudents'])
+                    ->name('students.search');
+            });
+
+            // ── Marks Entry ──────────────────────────────────────────
+            Route::get('/results/marks', [MarksController::class, 'index'])
+                ->name('tenant.results.marks.index');
+            Route::post('/results/marks', [MarksController::class, 'store'])
+                ->name('tenant.results.marks.store');
+
+            // ── Exams (view = staff, create/edit/delete = admin only) ──
+            Route::get('/results/exams', [ExamController::class, 'index'])
+                ->name('tenant.results.exams.index');
+            Route::post('/results/exams', [ExamController::class, 'store'])
+                ->name('tenant.results.exams.store');
+            Route::put('/results/exams/{exam}', [ExamController::class, 'update'])
+                ->name('tenant.results.exams.update');
+            Route::delete('/results/exams/{exam}', [ExamController::class, 'destroy'])
+                ->name('tenant.results.exams.destroy');
+            Route::get('/results/exams/{exam}/subjects', [ExamController::class, 'subjects'])
+                ->name('tenant.results.exams.subjects');
+            Route::post('/results/exams/{exam}/subjects', [ExamController::class, 'storeSubject'])
+                ->name('tenant.results.exams.subjects.store');
+            Route::delete('/results/exams/{exam}/subjects/{subject}', [ExamController::class, 'destroySubject'])
+                ->name('tenant.results.exams.subjects.destroy');
+
+            // ── Report Cards ─────────────────────────────────────────
+            Route::get('/results/report-cards', [ReportCardController::class, 'classResults'])
+                ->name('tenant.results.report-cards.index');
+            Route::get('/results/report-cards/{student}/print', [ReportCardController::class, 'print'])
+                ->name('tenant.results.report-cards.print');
+
+            // ── Timetable ────────────────────────────────────────────
+            Route::prefix('timetable')->name('tenant.timetable.')->group(function () {
+                Route::get('/', [TimetableController::class, 'index'])
+                    ->name('index');
+                Route::post('/entries', [TimetableController::class, 'saveEntry'])
+                    ->name('entries.save');
+                Route::delete('/entries/{entry}', [TimetableController::class, 'deleteEntry'])
+                    ->name('entries.delete');
+                Route::get('/slots', [TimetableController::class, 'slots'])
+                    ->name('slots');
+                Route::post('/slots', [TimetableController::class, 'storeSlot'])
+                    ->name('slots.store');
+                Route::delete('/slots/{slot}', [TimetableController::class, 'destroySlot'])
+                    ->name('slots.destroy');
+                Route::get('/teacher', [TimetableController::class, 'teacherView'])
+                    ->name('teacher');
+                Route::get('/print', [TimetableController::class, 'print'])
+                    ->name('print');
+                Route::get('/teacher-free-slots', [TimetableController::class, 'teacherFreeSlots'])
+                    ->name('teacher-free-slots');
+            });
         });
 
-        // Admin only
+        /*
+        |-----------------------------------------------------------
+        | LIBRARY — Admin + Staff with can_manage_library permission
+        | Each controller method enforces its own permission check.
+        |-----------------------------------------------------------
+        */
+        Route::prefix('library')->name('tenant.library.')->group(function () {
+            Route::get('/', [LibraryController::class, 'dashboard'])
+                ->name('dashboard');
+
+            // Books
+            Route::get('/books', [LibraryController::class, 'books'])
+                ->name('books');
+            Route::post('/books', [LibraryController::class, 'storeBook'])
+                ->name('books.store');
+            Route::put('/books/{book}', [LibraryController::class, 'updateBook'])
+                ->name('books.update');
+            Route::delete('/books/{book}', [LibraryController::class, 'destroyBook'])
+                ->name('books.destroy');
+
+            // Members
+            Route::get('/members', [LibraryController::class, 'members'])
+                ->name('members');
+            Route::post('/members', [LibraryController::class, 'storeMember'])
+                ->name('members.store');
+            Route::put('/members/{member}', [LibraryController::class, 'updateMember'])
+                ->name('members.update');
+
+            // Issues / Returns
+            Route::get('/issues', [LibraryController::class, 'issues'])
+                ->name('issues');
+            Route::post('/issues', [LibraryController::class, 'storeIssue'])
+                ->name('issues.store');
+            Route::patch('/issues/{issue}/return', [LibraryController::class, 'returnBook'])
+                ->name('issues.return');
+            Route::patch('/issues/{issue}/lost', [LibraryController::class, 'markLost'])
+                ->name('issues.lost');
+
+            // Ajax search endpoints
+            Route::get('/search/books', [LibraryController::class, 'searchBooks'])
+                ->name('search.books');
+            Route::get('/search/members', [LibraryController::class, 'searchMembers'])
+                ->name('search.members');
+        });
+
+        /*
+        |-----------------------------------------------------------
+        | ADMIN ONLY
+        |-----------------------------------------------------------
+        */
         Route::middleware(TenantAdminOnly::class)->group(function () {
+
+            // Staff Permissions Management
+            Route::get('/staff-permissions', [StaffPermissionsController::class, 'index'])
+                ->name('tenant.staff.permissions.index');
+            Route::get('/staff-permissions/{userId}/edit', [StaffPermissionsController::class, 'edit'])
+                ->name('tenant.staff.permissions.edit');
+            Route::put('/staff-permissions/{userId}', [StaffPermissionsController::class, 'update'])
+                ->name('tenant.staff.permissions.update');
+            Route::put('/staff-permissions/{userId}/defaults', [StaffPermissionsController::class, 'applyDefaults'])
+                ->name('tenant.staff.permissions.defaults');
 
             Route::get('/academic-years', [AcademicYearController::class, 'index'])
                 ->name('tenant.academic-years.index');
@@ -112,6 +333,7 @@ Route::middleware([
                 ->name('tenant.classes.sections.destroy');
             Route::post('/classes/reorder', [ClassController::class, 'reorder'])
                 ->name('tenant.classes.reorder');
+
             // Class Subjects
             Route::post('/classes/{schoolClass}/subjects', [ClassController::class, 'storeSubject'])
                 ->name('tenant.classes.subjects.store');
@@ -137,31 +359,7 @@ Route::middleware([
                     ->name('school.update');
             });
 
-            // Students
-            Route::get('/students', [StudentController::class, 'index'])
-                ->name('tenant.students.index');
-            Route::get('/students/create', [StudentController::class, 'create'])
-                ->name('tenant.students.create');
-            Route::post('/students', [StudentController::class, 'store'])
-                ->name('tenant.students.store');
-            Route::get('/students/{student}', [StudentController::class, 'show'])
-                ->name('tenant.students.show');
-            Route::get('/students/{student}/edit', [StudentController::class, 'edit'])
-                ->name('tenant.students.edit');
-            Route::put('/students/{student}', [StudentController::class, 'update'])
-                ->name('tenant.students.update');
-            Route::delete('/students/{student}', [StudentController::class, 'destroy'])
-                ->name('tenant.students.destroy');
-            Route::patch('/students/{student}/status', [StudentController::class, 'updateStatus'])
-                ->name('tenant.students.status');
-            Route::patch('/students/documents/{document}/verify', [StudentController::class, 'verifyDocument'])
-                ->name('tenant.students.documents.verify');
-
-            // Ajax
-            Route::get('/classes/{class}/sections', [StudentController::class, 'getSections'])
-                ->name('tenant.classes.get-sections');
-
-            // Staff
+            // Staff CRUD (admin only)
             Route::get('/staff', [StaffController::class, 'index'])
                 ->name('tenant.staff.index');
             Route::get('/staff/create', [StaffController::class, 'create'])
@@ -180,176 +378,39 @@ Route::middleware([
                 ->name('tenant.staff.status');
             Route::patch('/staff/documents/{document}/verify', [StaffController::class, 'verifyDocument'])
                 ->name('tenant.staff.documents.verify');
+            Route::post('/staff/{staff}/reset-password', [StaffController::class, 'resetPassword'])
+                ->name('tenant.staff.reset-password');
 
-            Route::prefix('subjects')->name('tenant.subjects.')->middleware(['auth:tenant'])->group(function () {
+            Route::prefix('subjects')->name('tenant.subjects.')->group(function () {
                 Route::get('/', [SubjectController::class, 'index'])->name('index');
                 Route::post('/', [SubjectController::class, 'store'])->name('store');
                 Route::put('/{subject}', [SubjectController::class, 'update'])->name('update');
                 Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('destroy');
-
                 Route::get('/assign', [SubjectController::class, 'assign'])->name('assign');
                 Route::post('/assign', [SubjectController::class, 'saveAssign'])->name('assign.save');
                 Route::delete('/assign/{subject}', [SubjectController::class, 'removeAssign'])->name('assign.remove');
             });
 
-            // Fee Heads
+            // Fee Heads & Structures (admin only — setup)
             Route::prefix('fees')->name('tenant.fees.')->group(function () {
-
-                // Fee Heads
-                Route::get('/heads', [FeeHeadController::class, 'index'])
-                    ->name('heads.index');
-                Route::post('/heads', [FeeHeadController::class, 'store'])
-                    ->name('heads.store');
-                Route::put('/heads/{feeHead}', [FeeHeadController::class, 'update'])
-                    ->name('heads.update');
-                Route::delete('/heads/{feeHead}', [FeeHeadController::class, 'destroy'])
-                    ->name('heads.destroy');
-
-                // Fee Structures
-                Route::get('/structures', [FeeStructureController::class, 'index'])
-                    ->name('structures.index');
-                Route::post('/structures', [FeeStructureController::class, 'store'])
-                    ->name('structures.store');
-                Route::delete('/structures/{feeStructure}', [FeeStructureController::class, 'destroy'])
-                    ->name('structures.destroy');
-
-                // Collections
-                Route::get('/collections', [FeeCollectionController::class, 'index'])
-                    ->name('collections.index');
-                Route::get('/collections/create', [FeeCollectionController::class, 'create'])
-                    ->name('collections.create');
-                Route::post('/collections', [FeeCollectionController::class, 'store'])
-                    ->name('collections.store');
-                Route::get('/collections/ledger', [FeeCollectionController::class, 'studentLedger'])
-                    ->name('collections.ledger');
-                Route::get('/collections/receipt/{feeCollection}', [FeeCollectionController::class, 'receipt'])
-                    ->name('receipt');
-                Route::post('/collections/generate-demands', [FeeCollectionController::class, 'generateDemands'])
-                    ->name('collections.generate-demands');
-                Route::patch('/collections/demands/{demand}/waive', [FeeCollectionController::class, 'waiveDemand'])
-                    ->name('collections.waive-demand');
-
-                // Ajax
-                Route::get('/students/search', [FeeCollectionController::class, 'searchStudents'])
-                    ->name('students.search');
+                Route::get('/heads', [FeeHeadController::class, 'index'])->name('heads.index');
+                Route::post('/heads', [FeeHeadController::class, 'store'])->name('heads.store');
+                Route::put('/heads/{feeHead}', [FeeHeadController::class, 'update'])->name('heads.update');
+                Route::delete('/heads/{feeHead}', [FeeHeadController::class, 'destroy'])->name('heads.destroy');
+                Route::get('/structures', [FeeStructureController::class, 'index'])->name('structures.index');
+                Route::post('/structures', [FeeStructureController::class, 'store'])->name('structures.store');
+                Route::delete('/structures/{feeStructure}', [FeeStructureController::class, 'destroy'])->name('structures.destroy');
             });
 
-            // Attendance
-            Route::prefix('attendance')->name('tenant.attendance.')->group(function () {
-
-                // Student Attendance
-                Route::get('/students', [StudentAttendanceController::class, 'index'])
-                    ->name('students.index');
-                Route::post('/students', [StudentAttendanceController::class, 'store'])
-                    ->name('students.store');
-
-                // Staff Attendance
-                Route::get('/staff', [StaffAttendanceController::class, 'index'])
-                    ->name('staff.index');
-                Route::post('/staff', [StaffAttendanceController::class, 'store'])
-                    ->name('staff.store');
-
-                // Reports
-                Route::get('/reports/daily', [AttendanceReportController::class, 'dailySummary'])
-                    ->name('reports.daily');
-                Route::get('/reports/students/monthly', [AttendanceReportController::class, 'studentMonthly'])
-                    ->name('reports.students.monthly');
-                Route::get('/reports/staff/monthly', [AttendanceReportController::class, 'staffMonthly'])
-                    ->name('reports.staff.monthly');
-            });
-
-            // Timetable
-            Route::prefix('timetable')->name('tenant.timetable.')->middleware(['auth:tenant'])->group(function () {
-
-                // Class timetable grid
-                Route::get('/', [TimetableController::class, 'index'])
-                    ->name('index');
-                Route::post('/entries', [TimetableController::class, 'saveEntry'])
-                    ->name('entries.save');
-                Route::delete('/entries/{entry}', [TimetableController::class, 'deleteEntry'])
-                    ->name('entries.delete');
-
-                // Slot management
-                Route::get('/slots', [TimetableController::class, 'slots'])
-                    ->name('slots');
-                Route::post('/slots', [TimetableController::class, 'storeSlot'])
-                    ->name('slots.store');
-                Route::delete('/slots/{slot}', [TimetableController::class, 'destroySlot'])
-                    ->name('slots.destroy');
-
-                // Teacher view
-                Route::get('/teacher', [TimetableController::class, 'teacherView'])
-                    ->name('teacher');
-
-                // Print
-                Route::get('/print', [TimetableController::class, 'print'])
-                    ->name('print');
-
-                // Ajax
-                Route::get('/teacher-free-slots', [TimetableController::class, 'teacherFreeSlots'])
-                    ->name('teacher-free-slots');
-            });
-
-            // Results and Exams
-            Route::prefix('results')->name('tenant.results.')->middleware(['auth:tenant'])->group(function () {
-
-                // Exams
-                Route::get('/exams', [ExamController::class, 'index'])
-                    ->name('exams.index');
-                Route::post('/exams', [ExamController::class, 'store'])
-                    ->name('exams.store');
-                Route::put('/exams/{exam}', [ExamController::class, 'update'])
-                    ->name('exams.update');
-                Route::delete('/exams/{exam}', [ExamController::class, 'destroy'])
-                    ->name('exams.destroy');
-
-                // Exam Subjects
-                Route::get('/exams/{exam}/subjects', [ExamController::class, 'subjects'])
-                    ->name('exams.subjects');
-                Route::post('/exams/{exam}/subjects', [ExamController::class, 'storeSubject'])
-                    ->name('exams.subjects.store');
-                Route::delete('/exams/{exam}/subjects/{subject}', [ExamController::class, 'destroySubject'])
-                    ->name('exams.subjects.destroy');
-
-                // Marks Entry
-                Route::get('/marks', [MarksController::class, 'index'])
-                    ->name('marks.index');
-                Route::post('/marks', [MarksController::class, 'store'])
-                    ->name('marks.store');
-
-                // Report Cards
-                Route::get('/report-cards', [ReportCardController::class, 'classResults'])
-                    ->name('report-cards.index');
-                Route::get('/report-cards/{student}/print', [ReportCardController::class, 'print'])
-                    ->name('report-cards.print');
-
-                // Grade Scales
-                Route::get('/grade-scales', [GradeScaleController::class, 'index'])
-                    ->name('grade-scales.index');
-                Route::post('/grade-scales', [GradeScaleController::class, 'store'])
-                    ->name('grade-scales.store');
-                Route::delete('/grade-scales/{gradeScale}', [GradeScaleController::class, 'destroy'])
-                    ->name('grade-scales.destroy');
-                Route::post('/grade-scales/apply-default', [GradeScaleController::class, 'applyDefault'])
-                    ->name('grade-scales.apply-default');
-            });
-
-            // Parent management (admin only)
-            Route::get('/parents', [ParentController::class, 'index'])
-                ->name('tenant.parents.index');
-            Route::get('/parents/{parent}', [ParentController::class, 'show'])
-                ->name('tenant.parents.show');
-            Route::get('/parents/{parent}/edit', [ParentController::class, 'edit'])
-                ->name('tenant.parents.edit');
-            Route::put('/parents/{parent}', [ParentController::class, 'update'])
-                ->name('tenant.parents.update');
-            Route::post('/parents/{parent}/reset-password', [ParentController::class, 'resetPassword'])
-                ->name('tenant.parents.reset-password');
-            Route::post('/parents/{parent}/link-student', [ParentController::class, 'linkStudent'])
-                ->name('tenant.parents.link-student');
-            Route::delete('/parents/{parent}/unlink/{student}', [ParentController::class, 'unlinkStudent'])
-                ->name('tenant.parents.unlink-student');
-
+            // Grade Scales (admin only)
+            Route::get('/results/grade-scales', [GradeScaleController::class, 'index'])
+                ->name('tenant.results.grade-scales.index');
+            Route::post('/results/grade-scales', [GradeScaleController::class, 'store'])
+                ->name('tenant.results.grade-scales.store');
+            Route::delete('/results/grade-scales/{gradeScale}', [GradeScaleController::class, 'destroy'])
+                ->name('tenant.results.grade-scales.destroy');
+            Route::post('/results/grade-scales/apply-default', [GradeScaleController::class, 'applyDefault'])
+                ->name('tenant.results.grade-scales.apply-default');
         });
 
         // Parent Portal (parents only)

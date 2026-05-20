@@ -7,24 +7,32 @@ use App\Models\AcademicYear;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\StaffProfile;
+use App\Models\TenantUser;
 use App\Models\TimetableEntry;
 use App\Models\TimetableSlot;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class TimetableController extends Controller
 {
+    private function tenantUser(): TenantUser
+    {
+        return Auth::guard('tenant')->user();
+    }
+
     // ─── Slot Management ────────────────────────────────────────────
 
     public function slots(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_manage_timetable');
+
         $activeYear = AcademicYear::active();
-        $classes    = $activeYear
+        $classes = $activeYear
             ? SchoolClass::where('academic_year_id', $activeYear->id)
                 ->orderBy('order')->get()
             : collect();
 
-        $classId   = $request->class_id;
+        $classId = $request->class_id;
         $sectionId = $request->section_id;
 
         $sections = $classId
@@ -34,7 +42,7 @@ class TimetableController extends Controller
         $slots = ($classId && $activeYear)
             ? TimetableSlot::where('academic_year_id', $activeYear->id)
                 ->where('class_id', $classId)
-                ->when($sectionId, fn($q) => $q->where('section_id', $sectionId))
+                ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
                 ->orderBy('period_number')
                 ->orderBy('day_of_week')
                 ->get()
@@ -48,35 +56,37 @@ class TimetableController extends Controller
 
     public function storeSlot(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_manage_timetable');
+
         $request->validate([
-            'class_id'        => ['required', 'exists:classes,id'],
-            'period_number'   => ['required', 'integer', 'min:1', 'max:15'],
-            'period_name'     => ['required', 'string', 'max:50'],
-            'start_time'      => ['required', 'string'],
-            'end_time'        => ['required', 'string'],
-            'academic_year_id'=> ['required', 'exists:academic_years,id'],
+            'class_id' => ['required', 'exists:classes,id'],
+            'period_number' => ['required', 'integer', 'min:1', 'max:15'],
+            'period_name' => ['required', 'string', 'max:50'],
+            'start_time' => ['required', 'string'],
+            'end_time' => ['required', 'string'],
+            'academic_year_id' => ['required', 'exists:academic_years,id'],
         ]);
 
         TimetableSlot::updateOrCreate(
             [
                 'academic_year_id' => $request->academic_year_id,
-                'class_id'         => $request->class_id,
-                'section_id'       => $request->section_id ?: null,
-                'period_number'    => $request->period_number,
-                'day_of_week'      => $request->day_of_week ?: null,
+                'class_id' => $request->class_id,
+                'section_id' => $request->section_id ?: null,
+                'period_number' => $request->period_number,
+                'day_of_week' => $request->day_of_week ?: null,
             ],
             [
                 'period_name' => $request->period_name,
-                'start_time'  => $request->start_time,
-                'end_time'    => $request->end_time,
-                'is_break'    => $request->boolean('is_break'),
-                'is_active'   => true,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'is_break' => $request->boolean('is_break'),
+                'is_active' => true,
             ]
         );
 
         return redirect()
             ->route('tenant.timetable.slots', [
-                'class_id'   => $request->class_id,
+                'class_id' => $request->class_id,
                 'section_id' => $request->section_id,
             ])
             ->with('success', 'Period slot saved.');
@@ -84,7 +94,9 @@ class TimetableController extends Controller
 
     public function destroySlot(TimetableSlot $slot)
     {
-        $classId   = $slot->class_id;
+        $this->tenantUser()->authorizePermission('can_manage_timetable');
+
+        $classId = $slot->class_id;
         $sectionId = $slot->section_id;
         $slot->delete();
 
@@ -97,13 +109,15 @@ class TimetableController extends Controller
 
     public function index(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_manage_timetable');
+
         $activeYear = AcademicYear::active();
-        $classes    = $activeYear
+        $classes = $activeYear
             ? SchoolClass::where('academic_year_id', $activeYear->id)
                 ->orderBy('order')->get()
             : collect();
 
-        $classId   = $request->class_id;
+        $classId = $request->class_id;
         $sectionId = $request->section_id;
 
         $sections = $classId
@@ -116,14 +130,14 @@ class TimetableController extends Controller
             ->get();
 
         // Load slots and entries
-        $slots   = collect();
+        $slots = collect();
         $entries = collect();
-        $grid    = [];
+        $grid = [];
 
         if ($classId && $activeYear) {
             $slots = TimetableSlot::where('academic_year_id', $activeYear->id)
                 ->where('class_id', $classId)
-                ->when($sectionId, fn($q) => $q->where('section_id', $sectionId))
+                ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
                 ->where('is_active', true)
                 ->orderBy('period_number')
                 ->get();
@@ -131,7 +145,7 @@ class TimetableController extends Controller
             $entries = TimetableEntry::with('teacher')
                 ->where('academic_year_id', $activeYear->id)
                 ->where('class_id', $classId)
-                ->when($sectionId, fn($q) => $q->where('section_id', $sectionId))
+                ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
                 ->get();
 
             // Build grid: grid[period][day] = entry
@@ -151,12 +165,14 @@ class TimetableController extends Controller
 
     public function saveEntry(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_manage_timetable');
+
         $request->validate([
             'academic_year_id' => ['required', 'exists:academic_years,id'],
-            'class_id'         => ['required', 'exists:classes,id'],
-            'day_of_week'      => ['required', 'integer', 'min:1', 'max:6'],
-            'period_number'    => ['required', 'integer', 'min:1'],
-            'subject_name'     => ['required', 'string', 'max:100'],
+            'class_id' => ['required', 'exists:classes,id'],
+            'day_of_week' => ['required', 'integer', 'min:1', 'max:6'],
+            'period_number' => ['required', 'integer', 'min:1'],
+            'subject_name' => ['required', 'string', 'max:100'],
         ]);
 
         // Conflict check — same teacher at same time
@@ -169,18 +185,19 @@ class TimetableController extends Controller
                 ->where('period_number', $request->period_number)
                 ->where(function ($q) use ($request) {
                     $q->where('class_id', '!=', $request->class_id)
-                      ->orWhere('section_id', '!=', $request->section_id);
+                        ->orWhere('section_id', '!=', $request->section_id);
                 })
                 ->first();
 
             if ($conflict) {
                 $className = $conflict->class?->name
-                    . ($conflict->section ? ' ' . $conflict->section->name : '');
+                    .($conflict->section ? ' '.$conflict->section->name : '');
+
                 return response()->json([
                     'conflict' => true,
-                    'message'  => "Teacher already assigned to {$className} on "
-                        . TimetableSlot::dayLabels()[$request->day_of_week]
-                        . ", Period {$request->period_number}.",
+                    'message' => "Teacher already assigned to {$className} on "
+                        .TimetableSlot::dayLabels()[$request->day_of_week]
+                        .", Period {$request->period_number}.",
                 ], 422);
             }
         }
@@ -188,16 +205,16 @@ class TimetableController extends Controller
         $entry = TimetableEntry::updateOrCreate(
             [
                 'academic_year_id' => $request->academic_year_id,
-                'class_id'         => $request->class_id,
-                'section_id'       => $request->section_id ?: null,
-                'day_of_week'      => $request->day_of_week,
-                'period_number'    => $request->period_number,
+                'class_id' => $request->class_id,
+                'section_id' => $request->section_id ?: null,
+                'day_of_week' => $request->day_of_week,
+                'period_number' => $request->period_number,
             ],
             [
-                'subject_name'    => $request->subject_name,
+                'subject_name' => $request->subject_name,
                 'subject_name_hi' => $request->subject_name_hi,
-                'teacher_id'      => $request->teacher_id ?: null,
-                'room_number'     => $request->room_number,
+                'teacher_id' => $request->teacher_id ?: null,
+                'room_number' => $request->room_number,
             ]
         );
 
@@ -205,19 +222,22 @@ class TimetableController extends Controller
 
         return response()->json([
             'success' => true,
-            'entry'   => [
-                'id'             => $entry->id,
-                'subject_name'   => $entry->subject_name,
-                'subject_name_hi'=> $entry->subject_name_hi,
-                'teacher'        => $entry->teacher?->full_name,
-                'room_number'    => $entry->room_number,
+            'entry' => [
+                'id' => $entry->id,
+                'subject_name' => $entry->subject_name,
+                'subject_name_hi' => $entry->subject_name_hi,
+                'teacher' => $entry->teacher?->full_name,
+                'room_number' => $entry->room_number,
             ],
         ]);
     }
 
     public function deleteEntry(TimetableEntry $entry)
     {
+        $this->tenantUser()->authorizePermission('can_manage_timetable');
+
         $entry->delete();
+
         return response()->json(['success' => true]);
     }
 
@@ -225,16 +245,18 @@ class TimetableController extends Controller
 
     public function teacherView(Request $request)
     {
+        $this->tenantUser()->authorizePermission('can_view_timetable');
+
         $activeYear = AcademicYear::active();
-        $teachers   = StaffProfile::where('staff_type', 'teaching')
+        $teachers = StaffProfile::where('staff_type', 'teaching')
             ->where('status', 'active')
             ->orderBy('first_name')
             ->get();
 
         $teacherId = $request->teacher_id;
-        $grid      = [];
-        $periods   = [];
-        $days      = TimetableSlot::dayLabels();
+        $grid = [];
+        $periods = [];
+        $days = TimetableSlot::dayLabels();
 
         if ($teacherId && $activeYear) {
             $entries = TimetableEntry::with(['class', 'section'])
@@ -252,7 +274,7 @@ class TimetableController extends Controller
 
         // Free slots — find which periods the teacher is NOT assigned
         $allPeriods = range(1, 8);
-        $busySlots  = [];
+        $busySlots = [];
         foreach ($grid as $period => $dayEntries) {
             foreach ($dayEntries as $day => $entry) {
                 $busySlots[] = "{$day}-{$period}";
@@ -269,16 +291,18 @@ class TimetableController extends Controller
 
     public function print(Request $request)
     {
-        $activeYear = AcademicYear::active();
-        $classId    = $request->class_id;
-        $sectionId  = $request->section_id;
+        $this->tenantUser()->authorizePermission('can_view_timetable');
 
-        $class   = SchoolClass::find($classId);
+        $activeYear = AcademicYear::active();
+        $classId = $request->class_id;
+        $sectionId = $request->section_id;
+
+        $class = SchoolClass::find($classId);
         $section = Section::find($sectionId);
 
         $slots = TimetableSlot::where('academic_year_id', $activeYear?->id)
             ->where('class_id', $classId)
-            ->when($sectionId, fn($q) => $q->where('section_id', $sectionId))
+            ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->where('is_active', true)
             ->orderBy('period_number')
             ->get();
@@ -286,7 +310,7 @@ class TimetableController extends Controller
         $entries = TimetableEntry::with('teacher')
             ->where('academic_year_id', $activeYear?->id)
             ->where('class_id', $classId)
-            ->when($sectionId, fn($q) => $q->where('section_id', $sectionId))
+            ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->get();
 
         $grid = [];
@@ -306,14 +330,14 @@ class TimetableController extends Controller
     public function teacherFreeSlots(Request $request)
     {
         $activeYear = AcademicYear::active();
-        if (!$activeYear || !$request->teacher_id) {
+        if (! $activeYear || ! $request->teacher_id) {
             return response()->json([]);
         }
 
         $busySlots = TimetableEntry::where('academic_year_id', $activeYear->id)
             ->where('teacher_id', $request->teacher_id)
             ->get(['day_of_week', 'period_number'])
-            ->map(fn($e) => "{$e->day_of_week}-{$e->period_number}")
+            ->map(fn ($e) => "{$e->day_of_week}-{$e->period_number}")
             ->toArray();
 
         return response()->json(['busy' => $busySlots]);

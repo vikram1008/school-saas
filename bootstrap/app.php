@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckStaffPermission;
 use App\Http\Middleware\CheckSubscriptionStatus;
 use App\Http\Middleware\EnsureNotParent;
 use App\Http\Middleware\ParentOnly;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.admin' => TenantAdminOnly::class,
             'parent.only' => ParentOnly::class,
             'not.parent' => EnsureNotParent::class,
+            'staff.permission' => CheckStaffPermission::class,
         ]);
 
         // Smart Unauthenticated Redirect Logic
