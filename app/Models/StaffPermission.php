@@ -29,6 +29,7 @@ class StaffPermission extends Model
         'can_view_staff',
         'can_view_parents',
         'can_manage_library',
+        'can_approve_student_leave',
     ];
 
     protected $casts = [
@@ -48,6 +49,7 @@ class StaffPermission extends Model
         'can_view_staff' => 'boolean',
         'can_view_parents' => 'boolean',
         'can_manage_library' => 'boolean',
+        'can_approve_student_leave' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -80,6 +82,7 @@ class StaffPermission extends Model
                 'can_view_staff' => false,
                 'can_view_parents' => false,
                 'can_manage_library' => false,
+                'can_approve_student_leave' => true,
             ],
             'accountant' => [
                 'can_mark_student_attendance' => false,
@@ -98,6 +101,7 @@ class StaffPermission extends Model
                 'can_view_staff' => false,
                 'can_view_parents' => false,
                 'can_manage_library' => false,
+                'can_approve_student_leave' => false,
             ],
             'librarian' => [
                 'can_mark_student_attendance' => false,
@@ -116,6 +120,7 @@ class StaffPermission extends Model
                 'can_view_staff' => false,
                 'can_view_parents' => false,
                 'can_manage_library' => true,
+                'can_approve_student_leave' => false,
             ],
             default => [
                 'can_mark_student_attendance' => false,
@@ -134,6 +139,7 @@ class StaffPermission extends Model
                 'can_view_staff' => false,
                 'can_view_parents' => false,
                 'can_manage_library' => false,
+                'can_approve_student_leave' => false,
             ],
         };
     }
@@ -162,6 +168,7 @@ class StaffPermission extends Model
             'can_view_staff' => ['label' => 'View Staff', 'description' => 'Access staff directory', 'icon' => 'tabler-chalkboard', 'group' => 'People'],
             'can_view_parents' => ['label' => 'View Parents', 'description' => 'Access parent directory', 'icon' => 'tabler-users-group', 'group' => 'People'],
             'can_manage_library' => ['label' => 'Manage Library', 'description' => 'Issue, return, and manage library books', 'icon' => 'tabler-books', 'group' => 'Library'],
+            'can_approve_student_leave' => ['label' => 'Approve Student Leave', 'description' => 'Review and approve/reject student leave applications', 'icon' => 'tabler-calendar-check', 'group' => 'Leave'],
         ];
     }
 }

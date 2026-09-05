@@ -1,6 +1,14 @@
 @php
 use Illuminate\Support\Facades\Route;
+use App\Models\Tenant;
 $configData = Helper::appClasses();
+
+// Badge counts for sidebar
+$atRiskCount = 0;
+try {
+    $atRiskCount = \App\Models\Subscription::whereIn('status', ['grace_warning', 'grace_readonly', 'suspended'])
+        ->count();
+} catch (\Exception) {}
 @endphp
 
 <aside id="layout-menu" class="layout-menu menu-vertical menu" @foreach ($configData['menuAttributes'] as $attribute =>
@@ -21,6 +29,14 @@ $configData = Helper::appClasses();
     </a>
   </div>
   @endif
+
+  {{-- Super Admin Role Chip --}}
+  <div class="px-3 pb-2 pt-1">
+    <div style="display:inline-flex; align-items:center; gap:.4rem; background:linear-gradient(135deg,rgba(105,108,255,.15),rgba(145,85,253,.15)); border:1px solid rgba(105,108,255,.3); color:#696cff; font-size:.68rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:.3rem .9rem; border-radius:50rem; width:100%; justify-content:center;">
+      <i class="ti tabler-shield-check" style="font-size:.8rem;"></i>
+      Super Administrator
+    </div>
+  </div>
 
   <div class="menu-inner-shadow"></div>
 
@@ -76,6 +92,9 @@ $configData = Helper::appClasses();
       <a href="{{ route('superadmin.subscriptions.index') }}" class="menu-link">
         <i class="menu-icon icon-base ti tabler-receipt"></i>
         <div data-i18n="Subscriptions">Subscriptions</div>
+        @if($atRiskCount > 0)
+          <span class="badge bg-danger rounded-pill ms-auto" style="font-size:.65rem; padding:.2em .5em;">{{ $atRiskCount }}</span>
+        @endif
       </a>
     </li>
 

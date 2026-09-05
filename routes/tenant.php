@@ -10,9 +10,11 @@ use App\Http\Controllers\Tenant\FeeCollectionController;
 use App\Http\Controllers\Tenant\FeeHeadController;
 use App\Http\Controllers\Tenant\FeeStructureController;
 use App\Http\Controllers\Tenant\GradeScaleController;
+use App\Http\Controllers\Tenant\LeaveController;
 use App\Http\Controllers\Tenant\LibraryController;
 use App\Http\Controllers\Tenant\MarksController;
 use App\Http\Controllers\Tenant\NoticeController;
+use App\Http\Controllers\Tenant\NotificationController;
 use App\Http\Controllers\Tenant\ParentController;
 use App\Http\Controllers\Tenant\ParentPortalController;
 use App\Http\Controllers\Tenant\ReportCardController;
@@ -423,6 +425,23 @@ Route::middleware([
                 ->name('fees');
             Route::get('/notices', [ParentPortalController::class, 'notices'])
                 ->name('notices');
+        });
+
+        // ── Leave Management (all authenticated users) ────────────
+        Route::prefix('leave')->name('tenant.leave.')->group(function () {
+            Route::get('/', [LeaveController::class, 'index'])->name('index');
+            Route::get('/apply', [LeaveController::class, 'create'])->name('create');
+            Route::post('/', [LeaveController::class, 'store'])->name('store');
+            Route::get('/{leave}', [LeaveController::class, 'show'])->name('show');
+            Route::post('/{leave}/approve', [LeaveController::class, 'approve'])->name('approve');
+            Route::post('/{leave}/reject', [LeaveController::class, 'reject'])->name('reject');
+            Route::post('/{leave}/cancel', [LeaveController::class, 'cancel'])->name('cancel');
+        });
+
+        // ── Notifications ─────────────────────────────────────────
+        Route::prefix('notifications')->name('tenant.notifications.')->group(function () {
+            Route::get('/{id}/read', [NotificationController::class, 'markRead'])->name('read');
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
         });
 
     });

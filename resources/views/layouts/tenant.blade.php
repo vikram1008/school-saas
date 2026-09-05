@@ -114,6 +114,14 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
               </a>
             </li>
 
+            {{-- Leave Management --}}
+            <li class="menu-item {{ request()->routeIs('tenant.leave.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.leave.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-calendar-off"></i>
+                <div>Leave Management / अवकाश</div>
+              </a>
+            </li>
+
             {{-- ── 2. PEOPLE MANAGEMENT ── --}}
             <li class="menu-header small text-uppercase">
               <span class="menu-header-text">People / लोग</span>
@@ -352,6 +360,14 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
             </li>
             @endif
 
+            {{-- Leave — always visible for staff --}}
+            <li class="menu-item {{ request()->routeIs('tenant.leave.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.leave.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-calendar-off"></i>
+                <div>My Leave</div>
+              </a>
+            </li>
+
             {{-- ── ACADEMICS ── --}}
             @if($sp->can_view_exams || $sp->can_view_report_cards || $sp->can_view_timetable || $sp->can_view_attendance_reports)
             <li class="menu-header small text-uppercase">
@@ -492,6 +508,14 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
               </a>
             </li>
 
+            {{-- Leave for parent --}}
+            <li class="menu-item {{ request()->routeIs('tenant.leave.*') ? 'active' : '' }}">
+              <a href="{{ route('tenant.leave.index') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-calendar-off"></i>
+                <div>Leave Applications</div>
+              </a>
+            </li>
+
           @endif
           {{-- /isParent --}}
 
@@ -527,6 +551,60 @@ $container = isset($configData['contentLayout']) && $configData['contentLayout']
 
           <div class="navbar-nav-right d-flex align-items-center ms-auto">
             <ul class="navbar-nav flex-row align-items-center ms-auto">
+
+              {{-- Notification Bell --}}
+              @php
+                $unreadNotifications = Auth::guard('tenant')->user()?->unreadNotifications ?? collect();
+                $unreadCount = $unreadNotifications->count();
+              @endphp
+              <li class="nav-item navbar-dropdown dropdown me-1">
+                <a class="nav-link dropdown-toggle hide-arrow position-relative px-2" href="javascript:void(0);"
+                   data-bs-toggle="dropdown" id="notificationDropdown">
+                  <i class="icon-base ti tabler-bell icon-lg"></i>
+                  @if($unreadCount > 0)
+                    <span class="badge bg-danger rounded-pill position-absolute" style="top:2px;right:2px;font-size:9px;min-width:16px;height:16px;padding:2px 4px">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                  @endif
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end p-0" style="min-width:340px;max-width:360px">
+                  <li class="px-3 pt-3 pb-2 d-flex justify-content-between align-items-center border-bottom">
+                    <h6 class="mb-0 fw-bold">Notifications</h6>
+                    @if($unreadCount > 0)
+                      <form method="POST" action="{{ route('tenant.notifications.mark-all-read') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-link btn-sm text-muted p-0" style="font-size:12px">Mark all read</button>
+                      </form>
+                    @endif
+                  </li>
+                  <div style="max-height:360px;overflow-y:auto">
+                    @forelse($unreadNotifications->take(10) as $notification)
+                      @php $d = $notification->data; @endphp
+                      <li>
+                        <a href="{{ route('tenant.notifications.read', $notification->id) }}"
+                           class="dropdown-item py-3 px-3 border-bottom d-flex gap-3 align-items-start">
+                          <div class="avatar avatar-sm flex-shrink-0">
+                            <span class="avatar-initial rounded-circle bg-label-{{ $d['color'] ?? 'primary' }}">
+                              <i class="icon-base ti {{ $d['icon'] ?? 'tabler-bell' }}" style="font-size:0.9rem"></i>
+                            </span>
+                          </div>
+                          <div class="flex-grow-1" style="min-width:0">
+                            <p class="fw-semibold mb-0 small">{{ $d['title'] ?? 'Notification' }}</p>
+                            <p class="text-muted mb-0" style="font-size:11px;white-space:normal">{{ Str::limit($d['message'] ?? '', 70) }}</p>
+                            <p class="text-muted mb-0" style="font-size:10px">{{ $notification->created_at->diffForHumans() }}</p>
+                          </div>
+                        </a>
+                      </li>
+                    @empty
+                      <li class="text-center py-5">
+                        <i class="icon-base ti tabler-bell-off text-muted mb-2" style="font-size:2rem;display:block"></i>
+                        <p class="text-muted small mb-0">No new notifications</p>
+                      </li>
+                    @endforelse
+                  </div>
+                  <li class="text-center py-2 border-top">
+                    <a href="{{ route('tenant.leave.index') }}" class="small text-primary">View all activity</a>
+                  </li>
+                </ul>
+              </li>
 
               {{-- User Dropdown --}}
               <li class="nav-item navbar-dropdown dropdown-user dropdown">

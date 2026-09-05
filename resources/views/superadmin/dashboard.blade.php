@@ -31,10 +31,15 @@
             <div style="color:#fff; font-weight:700; font-size:1.05rem;">{{ now()->format('d M') }}</div>
             <div style="color:rgba(255,255,255,.75); font-size:.75rem;">{{ now()->format('Y') }}</div>
           </div>
-          <div style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); border-radius:.75rem; padding:.6rem 1.1rem; text-align:center; min-width:90px;">
+          <div style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); border-radius:.75rem; padding:.6rem 1.1rem; text-align:center; min-width:90px; position:relative;">
             <div style="color:rgba(255,255,255,.75); font-size:.75rem; margin-bottom:.2rem;">Schools</div>
             <div style="color:#fff; font-weight:800; font-size:1.6rem; line-height:1.1;">{{ $totalSchools }}</div>
             <div style="color:rgba(255,255,255,.75); font-size:.75rem;">Total</div>
+            @if($newSchoolsThisMonth > 0)
+              <span style="position:absolute; top:-8px; right:-8px; background:#28c76f; color:#fff; font-size:.65rem; font-weight:700; padding:.2rem .5rem; border-radius:50rem; border:2px solid rgba(255,255,255,.3);">
+                +{{ $newSchoolsThisMonth }} new
+              </span>
+            @endif
           </div>
         </div>
       </div>
@@ -124,12 +129,12 @@
   </div>
 
   {{-- ── Main Content Row ─────────────────────────────────── --}}
-  <div class="row g-4">
+  <div class="row g-4 mb-4">
 
     {{-- Schools Overview Table --}}
     <div class="col-lg-8">
       <div class="card h-100" style="border-radius:1rem; border:none;">
-        <div class="card-header d-flex justify-content-between align-items-center py-3">
+        <div class="card-header d-flex justify-content-between align-items-center py-3 border-bottom" style="background:transparent;">
           <div>
             <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
               <span class="avatar-initial rounded bg-label-primary" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:.6rem!important;font-size:1rem;flex-shrink:0;">
@@ -139,7 +144,7 @@
             </h5>
             <p class="text-muted small mb-0 mt-1">Live student counts &amp; billing per school</p>
           </div>
-          <a href="{{ route('superadmin.schools.index') }}" class="btn btn-sm btn-outline-primary rounded-pill">
+          <a href="{{ route('superadmin.schools.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
             <i class="ti tabler-arrow-right me-1"></i> View All
           </a>
         </div>
@@ -147,7 +152,7 @@
           <table class="table table-hover mb-0">
             <thead>
               <tr style="font-size:.72rem; letter-spacing:.06em; text-transform:uppercase;">
-                <th style="min-width:180px; white-space:nowrap;">School</th>
+                <th style="min-width:180px; white-space:nowrap; padding-left:1.5rem;">School</th>
                 <th style="min-width:130px; white-space:nowrap;">Domain</th>
                 <th class="text-center" style="white-space:nowrap;">Students</th>
                 <th class="text-center" style="white-space:nowrap;">Rate</th>
@@ -158,12 +163,12 @@
             <tbody>
               @forelse($schoolStats as $stat)
                 <tr style="vertical-align:middle;">
-                  <td style="min-width:180px;">
+                  <td style="padding-left:1.5rem;">
                     <div class="d-flex align-items-center gap-2">
                       <span class="avatar-initial rounded" style="width:36px;height:36px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:.55rem!important;font-size:.8rem;font-weight:700;background:var(--bs-primary-bg-subtle);color:var(--bs-primary);">
                         {{ mb_strtoupper(mb_substr($stat['name'], 0, 2)) }}
                       </span>
-                      <a href="{{ route('superadmin.schools.show', $stat['id']) }}" class="fw-semibold text-body">
+                      <a href="{{ route('superadmin.schools.show', $stat['id']) }}" class="fw-semibold text-body" style="font-size:.875rem;">
                         {{ $stat['name'] }}
                       </a>
                     </div>
@@ -203,7 +208,7 @@
             @if(count($schoolStats) > 0)
             <tfoot>
               <tr class="table-light" style="font-size:.8rem; text-transform:uppercase; letter-spacing:.05em;">
-                <td colspan="2" class="fw-bold text-muted ps-3">Totals</td>
+                <td colspan="2" class="fw-bold text-muted" style="padding-left:1.5rem;">Totals</td>
                 <td class="text-center fw-bold">{{ number_format($totalStudents) }}</td>
                 <td></td>
                 <td class="text-end fw-bold text-success">₹{{ number_format($currentMonthRev) }}</td>
@@ -221,7 +226,7 @@
 
       {{-- Revenue Breakdown --}}
       <div class="card" style="border-radius:1rem; border:none;">
-        <div class="card-header py-3">
+        <div class="card-header py-3 border-bottom" style="background:transparent;">
           <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
             <span class="avatar-initial rounded bg-label-warning" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:.6rem!important;font-size:1rem;flex-shrink:0;">
               <i class="ti tabler-chart-donut text-warning" style="font-size:1rem;"></i>
@@ -269,7 +274,7 @@
 
       {{-- Quick Actions --}}
       <div class="card" style="border-radius:1rem; border:none;">
-        <div class="card-header py-3">
+        <div class="card-header py-3 border-bottom" style="background:transparent;">
           <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
             <span class="avatar-initial rounded bg-label-info" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:.6rem!important;font-size:1rem;flex-shrink:0;">
               <i class="ti tabler-bolt text-info" style="font-size:1rem;"></i>
@@ -329,5 +334,97 @@
     </div>
   </div>
 
+  {{-- ── Revenue Trend Chart ───────────────────────────────── --}}
+  @if($currentMonthRev > 0)
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card" style="border-radius:1rem; border:none;">
+        <div class="card-header d-flex justify-content-between align-items-center py-3 border-bottom" style="background:transparent;">
+          <div>
+            <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+              <span class="avatar-initial rounded bg-label-primary" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:.6rem!important;font-size:1rem;flex-shrink:0;">
+                <i class="ti tabler-chart-bar text-primary" style="font-size:1rem;"></i>
+              </span>
+              Revenue Trend
+            </h5>
+            <p class="text-muted small mb-0 mt-1">Monthly revenue — last 6 months</p>
+          </div>
+          <span class="badge bg-label-primary rounded-pill px-3">₹{{ number_format($currentMonthRev) }} this month</span>
+        </div>
+        <div class="card-body" style="padding:1.5rem;">
+          <canvas id="revenueChart" style="max-height:220px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) { return; }
+
+    const labels  = @json(array_column($monthlyRevenueChart, 'month'));
+    const data    = @json(array_column($monthlyRevenueChart, 'revenue'));
+
+    const isDark  = document.documentElement.classList.contains('dark-layout');
+    const gridCol = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.05)';
+    const textCol = isDark ? 'rgba(255,255,255,.5)'  : 'rgba(100,116,139,.8)';
+
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: data,
+          backgroundColor: data.map((_, i) =>
+            i === data.length - 1
+              ? 'rgba(105,108,255,.85)'
+              : 'rgba(105,108,255,.25)'
+          ),
+          borderColor: data.map((_, i) =>
+            i === data.length - 1
+              ? 'rgba(105,108,255,1)'
+              : 'rgba(105,108,255,.4)'
+          ),
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => '₹' + ctx.parsed.y.toLocaleString('en-IN')
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: textCol, font: { size: 12, weight: '600' } }
+          },
+          y: {
+            grid: { color: gridCol },
+            ticks: {
+              color: textCol,
+              callback: val => '₹' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val)
+            },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  })();
+</script>
+@endpush
 @endsection

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -39,6 +40,11 @@ class TenantUser extends Authenticatable
     public function staffPermission(): HasOne
     {
         return $this->hasOne(StaffPermission::class, 'user_id');
+    }
+
+    public function leaveApplications(): HasMany
+    {
+        return $this->hasMany(LeaveApplication::class, 'user_id');
     }
 
     // ── Role helpers ───────────────────────────────────────────────

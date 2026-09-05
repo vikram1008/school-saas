@@ -16,8 +16,26 @@ class SchoolController extends Controller
     public function index()
     {
         $schools = Tenant::with('domains')->latest()->paginate(15);
+        $activeCount = Tenant::where('is_active', true)->count();
 
-        return view('superadmin.schools.index', compact('schools'));
+        // Pull student counts for the current page of schools
+        $schoolStudents = [];
+        foreach ($schools as $school) {
+            try {
+                tenancy()->initialize($school);
+                $schoolStudents[$school->id] = DB::connection('tenant')
+                    ->table('users')
+                    ->where('role', 'student')
+                    ->where('is_active', true)
+                    ->count();
+                tenancy()->end();
+            } catch (\Exception) {
+                tenancy()->end();
+                $schoolStudents[$school->id] = 0;
+            }
+        }
+
+        return view('superadmin.schools.index', compact('schools', 'activeCount', 'schoolStudents'));
     }
 
     public function create()
